@@ -1,0 +1,359 @@
+/* Reachy F1 Commentator - Web UI Styles */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+header {
+    text-align: center;
+    color: white;
+    margin-bottom: 30px;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.header-content > div {
+    flex: 1;
+}
+
+header h1 {
+    font-size: 2.5em;
+    margin-bottom: 5px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.subtitle {
+    font-size: 1.2em;
+    opacity: 0.9;
+}
+
+.dashboard-link {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #e10600 0%, #ff3333 100%);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(225, 6, 0, 0.3);
+    white-space: nowrap;
+}
+
+.dashboard-link:hover {
+    background: linear-gradient(135deg, #ff3333 0%, #ff5555 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(225, 6, 0, 0.4);
+}
+
+.dashboard-link:active {
+    transform: translateY(0);
+}
+
+.status-bar {
+    background: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.status-indicator {
+    font-size: 1.5em;
+    margin-right: 10px;
+}
+
+.status-indicator.idle {
+    color: #6c757d;
+}
+
+.status-indicator.loading {
+    color: #ffc107;
+}
+
+.status-indicator.playing {
+    color: #28a745;
+}
+
+.status-indicator.stopped {
+    color: #dc3545;
+}
+
+#statusText {
+    font-weight: 600;
+    font-size: 1.1em;
+}
+
+.config-panel,
+.progress-panel,
+.qa-panel,
+.info-panel {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+h2 {
+    color: #667eea;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 10px;
+}
+
+h3 {
+    color: #764ba2;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #555;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 1em;
+    transition: border-color 0.3s;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+small {
+    display: block;
+    margin-top: 5px;
+    color: #666;
+    font-size: 0.85em;
+}
+
+small a {
+    color: #667eea;
+    text-decoration: none;
+}
+
+small a:hover {
+    text-decoration: underline;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+.btn {
+    flex: 1;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #5568d3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: #c82333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.race-selection {
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    margin-bottom: 15px;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-around;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+.progress-item {
+    text-align: center;
+}
+
+.progress-item .label {
+    display: block;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.progress-item span:not(.label) {
+    font-size: 1.3em;
+    color: #667eea;
+    font-weight: bold;
+}
+
+.info-panel ul {
+    padding-left: 25px;
+    margin: 15px 0;
+}
+
+.info-panel li {
+    margin: 8px 0;
+}
+
+.info-panel p {
+    margin: 10px 0;
+}
+
+.info-panel strong {
+    color: #667eea;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .dashboard-link {
+        width: 100%;
+        text-align: center;
+    }
+    
+    header h1 {
+        font-size: 2em;
+    }
+    
+    .config-panel,
+    .progress-panel,
+    .info-panel {
+        padding: 15px;
+    }
+    
+    .button-group {
+        flex-direction: column;
+    }
+    
+    .progress-info {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
+
+
+/* Q&A Panel Styles */
+.qa-panel {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 2px solid #667eea;
+}
+
+.qa-description {
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.qa-examples {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0;
+    background: white;
+    padding: 15px;
+    border-radius: 6px;
+    border-left: 4px solid #667eea;
+}
+
+.qa-examples li {
+    padding: 5px 0;
+    color: #667eea;
+    font-style: italic;
+}
+
+.qa-examples li:before {
+    content: "💬 ";
+    margin-right: 5px;
+}
+
+.answer-panel {
+    margin-top: 20px;
+    padding: 15px;
+    background: #e8f5e9;
+    border-radius: 6px;
+    border-left: 4px solid #4caf50;
+}
+
+.answer-panel h3 {
+    color: #2e7d32;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.answer-panel p {
+    color: #1b5e20;
+    font-size: 1.1em;
+    line-height: 1.6;
+    margin: 0;
+}

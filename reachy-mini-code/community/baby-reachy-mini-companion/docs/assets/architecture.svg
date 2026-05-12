@@ -1,0 +1,197 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 620" font-family="'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif">
+  <defs>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.08"/>
+    </filter>
+    <!-- Right-pointing arrow (pipeline flow) -->
+    <marker id="arrow-right" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 3.5 L 0 7 z" fill="#64748b"/>
+    </marker>
+    <!-- Down-pointing arrow -->
+    <marker id="arrow-down" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 3.5 L 0 7 z" fill="#64748b"/>
+    </marker>
+    <!-- Up-pointing arrow (feedback to LLM) — rose color -->
+    <marker id="arrow-up-rose" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 3.5 L 0 7 z" fill="#e11d48"/>
+    </marker>
+    <!-- Up-pointing arrow — purple -->
+    <marker id="arrow-up-purple" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 3.5 L 0 7 z" fill="#7c3aed"/>
+    </marker>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fafbff"/>
+      <stop offset="100%" stop-color="#f1f0ff"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="620" rx="16" fill="url(#bg)"/>
+
+  <!-- Title -->
+  <text x="450" y="36" text-anchor="middle" font-size="18" font-weight="700" fill="#1e1b4b">Fully Local AI Pipeline — 7 Models, Zero Cloud</text>
+
+  <!-- ════════════════ MAIN VOICE PIPELINE (horizontal, left to right) ════════════════ -->
+  <text x="36" y="78" font-size="11" font-weight="600" fill="#6366f1" letter-spacing="0.05em">VOICE PIPELINE</text>
+
+  <!-- Microphone -->
+  <rect x="36" y="90" width="100" height="52" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="86" y="113" text-anchor="middle" font-size="20">🎙️</text>
+  <text x="86" y="130" text-anchor="middle" font-size="10" fill="#475569">Microphone</text>
+
+  <!-- Arrow right -->
+  <line x1="136" y1="116" x2="162" y2="116" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-right)"/>
+
+  <!-- Silero VAD -->
+  <rect x="168" y="90" width="108" height="52" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2" filter="url(#shadow)"/>
+  <text x="222" y="111" text-anchor="middle" font-size="11" font-weight="700" fill="#5b21b6">Silero VAD</text>
+  <text x="222" y="126" text-anchor="middle" font-size="9" fill="#7c3aed">Voice Detection</text>
+  <text x="222" y="138" text-anchor="middle" font-size="8" fill="#a78bfa">PyTorch · 32ms chunks</text>
+
+  <!-- Arrow right -->
+  <line x1="276" y1="116" x2="302" y2="116" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-right)"/>
+
+  <!-- Faster-Whisper STT -->
+  <rect x="308" y="90" width="120" height="52" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2" filter="url(#shadow)"/>
+  <text x="368" y="111" text-anchor="middle" font-size="11" font-weight="700" fill="#5b21b6">Faster-Whisper</text>
+  <text x="368" y="126" text-anchor="middle" font-size="9" fill="#7c3aed">Speech-to-Text</text>
+  <text x="368" y="138" text-anchor="middle" font-size="8" fill="#a78bfa">ONNX · int8</text>
+
+  <!-- Arrow right -->
+  <line x1="428" y1="116" x2="454" y2="116" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-right)"/>
+
+  <!-- Ollama LLM (central hub) -->
+  <rect x="460" y="82" width="140" height="68" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="2" filter="url(#shadow)"/>
+  <text x="530" y="104" text-anchor="middle" font-size="12" font-weight="700" fill="#1e40af">Ollama / vLLM</text>
+  <text x="530" y="119" text-anchor="middle" font-size="9" fill="#2563eb">Qwen 2.5 · 3B</text>
+  <text x="530" y="133" text-anchor="middle" font-size="9" fill="#2563eb">Tool Calling + Reasoning</text>
+  <text x="530" y="146" text-anchor="middle" font-size="8" fill="#60a5fa">Local or Jetson vLLM</text>
+
+  <!-- Arrow right -->
+  <line x1="600" y1="116" x2="626" y2="116" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-right)"/>
+
+  <!-- Kokoro TTS -->
+  <rect x="632" y="90" width="108" height="52" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2" filter="url(#shadow)"/>
+  <text x="686" y="111" text-anchor="middle" font-size="11" font-weight="700" fill="#5b21b6">Kokoro TTS</text>
+  <text x="686" y="126" text-anchor="middle" font-size="9" fill="#7c3aed">Text-to-Speech</text>
+  <text x="686" y="138" text-anchor="middle" font-size="8" fill="#a78bfa">ONNX · streaming</text>
+
+  <!-- Arrow right -->
+  <line x1="740" y1="116" x2="766" y2="116" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-right)"/>
+
+  <!-- Speaker -->
+  <rect x="772" y="90" width="100" height="52" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="822" y="113" text-anchor="middle" font-size="20">🔊</text>
+  <text x="822" y="130" text-anchor="middle" font-size="10" fill="#475569">Speaker</text>
+
+  <!-- ════════════════ TOOL DISPATCH (below LLM, arrow down) ════════════════ -->
+  <line x1="530" y1="150" x2="530" y2="186" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-down)"/>
+  <text x="548" y="174" font-size="8" fill="#64748b">tool calls</text>
+
+  <!-- Tool dispatch box -->
+  <rect x="340" y="192" width="380" height="44" rx="10" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="530" y="212" text-anchor="middle" font-size="11" font-weight="700" fill="#854d0e">Tool Dispatch — 16+ Tools</text>
+  <text x="530" y="228" text-anchor="middle" font-size="9" fill="#a16207">camera · soothe_baby · dance · send_signal · story_time · move_head · ...</text>
+
+  <!-- ════════════════ TOOL TARGETS (arrows fan down from dispatch) ════════════════ -->
+
+  <!-- Arrow down-left to VLM -->
+  <line x1="430" y1="236" x2="180" y2="286" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-down)"/>
+
+  <!-- Arrow down-center to Robot -->
+  <line x1="530" y1="236" x2="530" y2="286" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-down)"/>
+
+  <!-- Arrow down-right to Signal -->
+  <line x1="630" y1="236" x2="810" y2="286" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-down)"/>
+
+  <!-- Camera + VLM -->
+  <rect x="80" y="292" width="200" height="56" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="2" filter="url(#shadow)"/>
+  <text x="180" y="314" text-anchor="middle" font-size="11" font-weight="700" fill="#1e40af">Vision LLM (VLM)</text>
+  <text x="180" y="329" text-anchor="middle" font-size="9" fill="#2563eb">Qwen2.5-VL / Qwen3-VL</text>
+  <text x="180" y="342" text-anchor="middle" font-size="8" fill="#60a5fa">Camera analysis · "What do you see?"</text>
+
+  <!-- Robot Motion -->
+  <rect x="400" y="292" width="260" height="56" rx="10" fill="#d1fae5" stroke="#059669" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="530" y="314" text-anchor="middle" font-size="11" font-weight="700" fill="#065f46">Reachy Mini — 100Hz Control</text>
+  <text x="530" y="329" text-anchor="middle" font-size="9" fill="#059669">Head motion · Antenna emotions · Dances</text>
+  <text x="530" y="342" text-anchor="middle" font-size="8" fill="#34d399">Face tracking · Audio-reactive head wobble</text>
+
+  <!-- Signal -->
+  <rect x="720" y="292" width="160" height="56" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="800" y="314" text-anchor="middle" font-size="11" font-weight="700" fill="#334155">Signal Alerts</text>
+  <text x="800" y="329" text-anchor="middle" font-size="9" fill="#64748b">Text + photo to parent</text>
+  <text x="800" y="342" text-anchor="middle" font-size="8" fill="#94a3b8">signal-cli · local</text>
+
+  <!-- ════════════════ SEPARATOR ════════════════ -->
+  <line x1="36" y1="380" x2="872" y2="380" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="6,4"/>
+  <text x="450" y="402" text-anchor="middle" font-size="11" font-weight="600" fill="#e11d48" letter-spacing="0.05em">AUTONOMOUS BACKGROUND LOOPS</text>
+
+  <!-- ════════════════ AUTONOMOUS LOOPS (3 columns) ════════════════ -->
+
+  <!-- Baby Cry Detection -->
+  <rect x="36" y="418" width="260" height="100" rx="12" fill="#fff1f2" stroke="#e11d48" stroke-width="2" filter="url(#shadow)"/>
+  <text x="166" y="440" text-anchor="middle" font-size="12" font-weight="700" fill="#be123c">Baby Cry Detection</text>
+  <rect x="52" y="450" width="228" height="18" rx="4" fill="#fecdd3"/>
+  <text x="166" y="463" text-anchor="middle" font-size="9" font-weight="600" fill="#9f1239">YAMNet — Audio Classifier (ONNX)</text>
+  <text x="166" y="482" text-anchor="middle" font-size="9" fill="#e11d48">Detects crying every 1s</text>
+  <text x="166" y="496" text-anchor="middle" font-size="9" fill="#e11d48">→ injects system event into LLM</text>
+  <text x="166" y="510" text-anchor="middle" font-size="9" fill="#e11d48">→ LLM calls soothe_baby + alert parent</text>
+
+  <!-- Danger Detection -->
+  <rect x="320" y="418" width="260" height="100" rx="12" fill="#fff1f2" stroke="#e11d48" stroke-width="2" filter="url(#shadow)"/>
+  <text x="450" y="440" text-anchor="middle" font-size="12" font-weight="700" fill="#be123c">Danger Detection</text>
+  <rect x="336" y="450" width="228" height="18" rx="4" fill="#fecdd3"/>
+  <text x="450" y="463" text-anchor="middle" font-size="9" font-weight="600" fill="#9f1239">YOLOv26 — Object Detection</text>
+  <text x="450" y="482" text-anchor="middle" font-size="9" fill="#e11d48">Scans camera every 2s for hazards</text>
+  <text x="450" y="496" text-anchor="middle" font-size="9" fill="#e11d48">→ triggers VLM camera analysis</text>
+  <text x="450" y="510" text-anchor="middle" font-size="9" fill="#e11d48">→ sends Signal photo alert to parent</text>
+
+  <!-- Signal Polling -->
+  <rect x="604" y="418" width="260" height="100" rx="12" fill="#f0f9ff" stroke="#0284c7" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="734" y="440" text-anchor="middle" font-size="12" font-weight="700" fill="#0c4a6e">Signal Polling</text>
+  <text x="734" y="460" text-anchor="middle" font-size="9" fill="#0369a1">Receives remote messages every 2s</text>
+  <text x="734" y="476" text-anchor="middle" font-size="9" fill="#0369a1">→ processed through LLM</text>
+  <text x="734" y="492" text-anchor="middle" font-size="9" fill="#0369a1">→ LLM responds with tools</text>
+  <text x="734" y="508" text-anchor="middle" font-size="9" fill="#0369a1">"What do you see?" → photo + description</text>
+
+  <!-- ════════════════ FEEDBACK ARROWS: loops → LLM (going UP) ════════════════ -->
+
+  <!-- Cry Detection → LLM (left side, going up) -->
+  <path d="M 46 418 L 46 160 L 460 116" stroke="#e11d48" stroke-width="2" fill="none" stroke-dasharray="6,3" marker-end="url(#arrow-up-rose)"/>
+  <text x="52" y="280" font-size="8" font-weight="600" fill="#e11d48" transform="rotate(-90, 52, 280)">system event</text>
+
+  <!-- Danger Detection → LLM (center-left, going up) -->
+  <path d="M 330 418 L 330 170 L 460 130" stroke="#e11d48" stroke-width="2" fill="none" stroke-dasharray="6,3" marker-end="url(#arrow-up-rose)"/>
+  <text x="336" y="280" font-size="8" font-weight="600" fill="#e11d48" transform="rotate(-90, 336, 280)">system event</text>
+
+  <!-- Signal Polling → LLM (right side, going up) -->
+  <path d="M 854 418 L 854 160 L 600 116" stroke="#7c3aed" stroke-width="2" fill="none" stroke-dasharray="6,3" marker-end="url(#arrow-up-purple)"/>
+  <text x="860" y="280" font-size="8" font-weight="600" fill="#7c3aed" transform="rotate(-90, 860, 280)">remote message</text>
+
+  <!-- ════════════════ LEGEND ════════════════ -->
+  <rect x="36" y="545" width="828" height="55" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+
+  <!-- AI Model -->
+  <rect x="56" y="558" width="14" height="14" rx="3" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+  <text x="78" y="570" font-size="10" fill="#475569">AI Model (ONNX/PyTorch)</text>
+
+  <!-- LLM -->
+  <rect x="230" y="558" width="14" height="14" rx="3" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="252" y="570" font-size="10" fill="#475569">LLM (Ollama/vLLM)</text>
+
+  <!-- Safety -->
+  <rect x="388" y="558" width="14" height="14" rx="3" fill="#fff1f2" stroke="#e11d48" stroke-width="1.5"/>
+  <text x="410" y="570" font-size="10" fill="#475569">Autonomous Safety</text>
+
+  <!-- Hardware -->
+  <rect x="540" y="558" width="14" height="14" rx="3" fill="#d1fae5" stroke="#059669" stroke-width="1.5"/>
+  <text x="562" y="570" font-size="10" fill="#475569">Robot Hardware</text>
+
+  <!-- Dashed = feedback -->
+  <line x1="690" y1="565" x2="720" y2="565" stroke="#e11d48" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="728" y="570" font-size="10" fill="#475569">Feedback to LLM</text>
+
+  <!-- Model count -->
+  <text x="450" y="590" text-anchor="middle" font-size="10" font-weight="600" fill="#6366f1">7 AI Models: Silero VAD · Faster-Whisper · Qwen LLM · Kokoro TTS · Qwen VLM · YAMNet · YOLOv26 — all running locally</text>
+
+</svg>

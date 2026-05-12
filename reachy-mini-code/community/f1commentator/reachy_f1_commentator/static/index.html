@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reachy F1 Commentator</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div>
+                    <h1>🏎️ Reachy F1 Commentator</h1>
+                    <p class="subtitle">Interactive F1 Race Commentary</p>
+                </div>
+                <a href="/static/dashboard.html" class="dashboard-link" target="_blank">
+                    📊 Live Dashboard
+                </a>
+            </div>
+        </header>
+
+        <div class="status-bar" id="statusBar">
+            <span class="status-indicator" id="statusIndicator">●</span>
+            <span id="statusText">Idle</span>
+        </div>
+
+        <div class="config-panel">
+            <h2>Configuration</h2>
+            
+            <div class="form-group">
+                <label for="mode">Mode:</label>
+                <select id="mode" class="form-control">
+                    <option value="quick_demo">Quick Demo (2-3 min)</option>
+                    <option value="full_race">Full Historical Race</option>
+                </select>
+            </div>
+
+            <div id="raceSelection" class="race-selection" style="display: none;">
+                <div class="form-group">
+                    <label for="year">Year:</label>
+                    <select id="year" class="form-control">
+                        <option value="">Loading...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="race">Race:</label>
+                    <select id="race" class="form-control">
+                        <option value="">Select year first</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="playbackSpeed">Playback Speed:</label>
+                <select id="playbackSpeed" class="form-control">
+                    <option value="1" selected>1x (Real-time - Recommended)</option>
+                    <option value="5">5x</option>
+                    <option value="10">10x</option>
+                    <option value="20">20x</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="apiKey">ElevenLabs API Key:</label>
+                <input type="password" id="apiKey" class="form-control" placeholder="sk_...">
+                <small>Get your API key from <a href="https://elevenlabs.io/" target="_blank">ElevenLabs</a></small>
+            </div>
+
+            <div class="form-group">
+                <label for="voiceId">Voice ID:</label>
+                <input type="text" id="voiceId" class="form-control" value="HSSEHuB5EziJgTfCVmC6">
+                <small>Default voice provided</small>
+            </div>
+
+            <div class="button-group">
+                <button id="startBtn" class="btn btn-primary">Start Commentary</button>
+                <button id="stopBtn" class="btn btn-secondary" disabled>Stop</button>
+            </div>
+        </div>
+
+        <div class="progress-panel" id="progressPanel" style="display: none;">
+            <h2>Playback Progress</h2>
+            <div class="progress-info">
+                <div class="progress-item">
+                    <span class="label">Lap:</span>
+                    <span id="currentLap">0</span> / <span id="totalLaps">0</span>
+                </div>
+                <div class="progress-item">
+                    <span class="label">Elapsed:</span>
+                    <span id="elapsedTime">00:00:00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="qa-panel" id="qaPanel" style="display: none;">
+            <h2>Ask a Question</h2>
+            <p class="qa-description">Ask Reachy about the race! Try questions like:</p>
+            <ul class="qa-examples">
+                <li>"Where is Hamilton?"</li>
+                <li>"Has Verstappen pitted?"</li>
+                <li>"Who's leading?"</li>
+                <li>"What's the gap to the leader?"</li>
+            </ul>
+            <div class="form-group">
+                <input type="text" id="questionInput" class="form-control" placeholder="Type your question here...">
+            </div>
+            <button id="askBtn" class="btn btn-primary">Ask Question</button>
+            <div id="answerPanel" class="answer-panel" style="display: none;">
+                <h3>Answer:</h3>
+                <p id="answerText"></p>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <h3>Quick Demo Mode</h3>
+            <p>Enhanced 3-5 minute demonstration featuring:</p>
+            <ul>
+                <li>Starting grid announcement</li>
+                <li>Race start ("Lights out and away we go!")</li>
+                <li>Multiple overtakes and position battles</li>
+                <li>Pit stops with tire strategy</li>
+                <li>Fastest lap records</li>
+                <li>Safety car deployment and restart</li>
+                <li>Checkered flag finish</li>
+            </ul>
+            <p><strong>No internet connection required!</strong></p>
+        </div>
+
+        <div class="info-panel">
+            <h3>Full Historical Race Mode</h3>
+            <p>Replay any F1 race from 2023-2025 with:</p>
+            <ul>
+                <li>Real race data from OpenF1 API</li>
+                <li>Configurable playback speed</li>
+                <li>Complete race commentary</li>
+                <li>All significant events</li>
+            </ul>
+            <p><strong>Requires internet connection</strong></p>
+            <p><em>Note: Not all races have complete telemetry data. <strong>China 2025</strong> is recommended as it has full overtake, pit stop, and race control data (221 overtakes, 25 pit stops).</em></p>
+        </div>
+    </div>
+
+    <script src="/static/main.js"></script>
+</body>
+</html>

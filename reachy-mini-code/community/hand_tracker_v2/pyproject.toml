@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "hand_tracker_v2"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "reachy-mini",
+    "reachy-mini-toolbox[vision]>=1.1.2"
+]
+keywords = ["reachy-mini-app"]
+
+[project.entry-points."reachy_mini_apps"]
+hand_tracker_v2 = "hand_tracker_v2.main:HandTrackerV2"
+
+[tool.setuptools]
+package-dir = { "" = "." }
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.package-data]
+hand_tracker_v2 = ["**/*"] # Also include all non-.py files

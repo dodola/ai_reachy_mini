@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Race Dashboard - Reachy F1 Commentator</title>
+    <link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <h1>🏎️ Live Race Dashboard</h1>
+            <div class="connection-status">
+                <span class="status-indicator" id="connectionStatus"></span>
+                <span id="connectionText">Connecting...</span>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Race Info Panel -->
+            <div class="panel race-info-panel">
+                <h2>Race Information</h2>
+                <div class="race-info-grid">
+                    <div class="info-item">
+                        <span class="label">Current Lap</span>
+                        <span class="value" id="currentLap">0 / 0</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Race Leader</span>
+                        <span class="value" id="raceLeader">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Fastest Lap</span>
+                        <span class="value" id="fastestLap">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Race Phase</span>
+                        <span class="value" id="racePhase">START</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Position Tower -->
+            <div class="panel position-tower-panel">
+                <h2>Position Tower</h2>
+                <div class="position-tower" id="positionTower">
+                    <div class="loading">Waiting for race data...</div>
+                </div>
+            </div>
+
+            <!-- Recent Events Feed -->
+            <div class="panel events-panel">
+                <h2>Recent Events</h2>
+                <div class="events-feed" id="eventsFeed">
+                    <div class="event-item">
+                        <span class="event-time">--:--</span>
+                        <span class="event-text">Waiting for events...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="dashboard-footer">
+            <a href="index.html" class="back-link">← Back to Control Panel</a>
+            <span>Reachy F1 Commentator Dashboard</span>
+        </footer>
+    </div>
+
+    <script src="/static/dashboard.js"></script>
+</body>
+</html>

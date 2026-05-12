@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width" />
+	<title>Reachy Mini Phone Teleop</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+		rel="stylesheet">
+	<link rel="stylesheet" href="style.css" />
+</head>
+
+	<body>
+		<header class="hero">
+			<div class="hero__content">
+				<h1>Teleoperate Reachy Mini with your phone!</h1>
+				<p class="subtitle">Move your phone around and watch Reachy Mini follow, control its antennas with your thumbs.</p>
+				<div class="alert">
+					<div class="alert__icon">⚠️</div>
+					<div class="alert__text">WebXR isn’t supported on iPhones yet, so this teleop app won’t work on iOS devices.</div>
+				</div>
+
+				<div class="hero__grid">
+					<div class="panel panel--dark">
+						<div class="panel__header">
+							<div>
+							<p class="eyebrow">How it works</p>
+							<h2>Phone-driven teleop</h2>
+						</div>
+					</div>
+					<ul class="list">
+						<!-- <li><span>📱</span><span class="list-text">Open the teleop link from your phone.</span></li> -->
+						<li><span>🛰️</span><span class="list-text">IMU + camera fusion streams a 6D pose to Reachy Mini.</span></li>
+						<li><span>🖐️</span><span class="list-text">Hold to move the head; release to freeze.</span></li>
+						<li><span>👍👍</span><span class="list-text">Two thumbs on the hold button: left thumb steers the left antenna, right thumb steers the right.</span></li>
+						<li><span>♻️</span><span class="list-text">Reset button snaps head and antennas back to neutral.</span></li>
+						<li><span>⚙️</span><span class="list-text">Uses the <a
+									href="https://github.com/SpesRobotics/teleop" target="_blank"
+									rel="noreferrer">teleop</a> library.</span></li>
+					</ul>
+				</div>
+
+				<div class="panel panel--media">
+					<div class="media">
+						<img src="reachy_mini_phone_teleop/assets/phone_teleop.gif"
+							alt="Phone teleoperation demo driving Reachy Mini"
+							loading="lazy" />
+						<div class="media-tag">Phone teleop demo</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</header>
+
+	<main class="section">
+		<div class="card steps-card">
+			<p class="eyebrow">Open from your phone</p>
+			<h2>Use the mobile UI</h2>
+			<ol class="step-list">
+				<li>
+					<span class="step-emoji">🌐</span>
+					<div class="step-text">
+						<strong>On your phone, open the Reachy dashboard.</strong>
+						<div class="muted">Wireless: reachy-mini.local:8000 • Lite: &lt;your-computer-ip&gt;:8000</div>
+					</div>
+				</li>
+				<li>
+					<span class="step-emoji">▶️</span>
+					<div class="step-text">
+						<strong>Start the Reachy Mini Phone Teleop app.</strong>
+						<div class="muted">Launch it from the dashboard app list.</div>
+					</div>
+				</li>
+				<li>
+					<span class="step-emoji">⚙️</span>
+					<div class="step-text">
+						<strong>Tap the cogwheel to open the UI on your phone.</strong>
+						<div class="muted">You’ll see the teleop view—status pill red/green shows connection.</div>
+					</div>
+				</li>
+				<li>
+					<span class="step-emoji">✊</span>
+					<div class="step-text">
+						<strong>Hold the big button to move the head.</strong>
+						<div class="muted">Release to stop. Tap “Reset pose” anytime to return home.</div>
+					</div>
+				</li>
+				<li>
+					<span class="step-emoji">👍</span>
+					<div class="step-text">
+						<strong>Use both thumbs on the hold button to steer antennas.</strong>
+						<div class="muted">Left thumb moves the left antenna, right thumb moves the right. Lift and regrab to continue from the current position.</div>
+					</div>
+				</li>
+			</ol>
+		</div>
+	</main>
+
+	<footer class="footer">
+		<p>
+			Reachy Mini Phone Teleop ·
+			<a href="https://github.com/pollen-robotics" target="_blank" rel="noreferrer">Pollen Robotics</a> ·
+			<a href="https://huggingface.co/spaces/pollen-robotics/Reachy_Mini_Apps" target="_blank"
+				rel="noreferrer">More apps</a>
+		</p>
+	</footer>
+
+</body>
+
+</html>

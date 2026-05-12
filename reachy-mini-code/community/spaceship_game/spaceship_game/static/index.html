@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Spaceship Game - Reachy Mini</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            background: #000;
+        }
+
+        #game-canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #hud {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: #0ff;
+            font-size: 24px;
+            text-shadow: 0 0 10px #0ff;
+            z-index: 100;
+            font-family: 'Courier New', monospace;
+        }
+
+        #debug-info {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: #0f0;
+            font-size: 14px;
+            text-shadow: 0 0 5px #0f0;
+            z-index: 100;
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        #instructions {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            color: #fff;
+            font-size: 16px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 300px;
+        }
+
+        .crosshair {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border: 2px solid #0ff;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.7;
+            transition: all 0.05s ease-out;
+            box-shadow: 0 0 10px #0ff, inset 0 0 10px #0ff;
+        }
+
+        .crosshair::before,
+        .crosshair::after {
+            content: '';
+            position: absolute;
+            background: #0ff;
+        }
+
+        .crosshair::before {
+            width: 2px;
+            height: 20px;
+            left: 50%;
+            top: -10px;
+            transform: translateX(-50%);
+        }
+
+        .crosshair::after {
+            width: 20px;
+            height: 2px;
+            top: 50%;
+            left: -10px;
+            transform: translateY(-50%);
+        }
+
+    </style>
+</head>
+
+<body>
+    <div id="game-canvas"></div>
+    <div class="crosshair"></div>
+
+    <div id="hud">
+        <div>WAVE: <span id="wave">0</span></div>
+        <div>SCORE: <span id="score">0</span></div>
+        <div id="status">HP: <span style="color: #0f0">100</span></div>
+    </div>
+
+    <div id="wave-message" style="position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%); color: #ff0; font-size: 64px; font-family: 'Courier New', monospace; text-shadow: 0 0 30px #ff0; z-index: 999; text-align: center; pointer-events: none; display: none;">
+    </div>
+
+    <style>
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+    </style>
+
+    <div id="start-message" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #0f0; font-size: 48px; font-family: 'Courier New', monospace; text-shadow: 0 0 20px #0f0; z-index: 1000; text-align: center; pointer-events: none;">
+        <div style="font-size: 64px;">SHOOT TO START</div>
+        <div style="font-size: 24px; margin-top: 20px; opacity: 0.7;">AIM AND FIRE AT THE TARGET</div>
+    </div>
+
+    <div id="debug-info">
+        <div>Roll: <span id="roll">0</span>°</div>
+        <div>Pitch: <span id="pitch">0</span>°</div>
+        <div>Yaw: <span id="yaw">0</span>°</div>
+        <div>Antennas: <span id="antennas">0, 0</span></div>
+    </div>
+
+    <div id="instructions">
+        <h3>SHMUP Controls</h3>
+        <p><strong>Defend yourself from enemy ships!</strong></p>
+        <ul>
+            <li><strong>Tilt up/down</strong> → Aim up/down</li>
+            <li><strong>Turn left/right</strong> → Aim left/right</li>
+            <li><strong>Tilt left/right</strong> → Banking (visual)</li>
+            <li><strong>Pull antennas</strong> → Fire guns!</li>
+        </ul>
+        <hr style="border-color: #444;">
+        <p><strong>Enemy Types:</strong></p>
+        <ul style="font-size: 14px;">
+            <li>🔴 Red: Basic (100pts)</li>
+            <li>🟠 Orange: Fast &amp; Aimed (150pts)</li>
+            <li>🟣 Purple: Heavy Spread (300pts)</li>
+        </ul>
+    </div>
+
+    <!-- Name entry overlay (shown at game over) -->
+    <div id="name-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:2000; display:none; align-items:center; justify-content:center; flex-direction:column;">
+        <div style="background:#001a2e; border:2px solid #0ff; border-radius:16px; padding:40px 60px; text-align:center; font-family:'Courier New',monospace; max-width:480px; width:90%;">
+            <div style="color:#f00; font-size:42px; text-shadow:0 0 20px #f00; margin-bottom:10px;">GAME OVER</div>
+            <div id="name-overlay-score" style="color:#0ff; font-size:32px; text-shadow:0 0 15px #0ff; margin-bottom:24px;"></div>
+            <div style="color:#fff; font-size:18px; margin-bottom:16px;">Enter your pilot name:</div>
+            <input id="name-input" type="text" maxlength="24" autocomplete="off" spellcheck="false"
+                placeholder="Pilot"
+                style="width:100%; box-sizing:border-box; background:#000; color:#0ff; border:2px solid #0ff; border-radius:8px; padding:12px 16px; font-size:22px; font-family:'Courier New',monospace; text-align:center; outline:none; margin-bottom:16px;">
+            <div style="color:#888; font-size:14px; margin-bottom:20px;">Press Enter to submit (auto-submits in <span id="name-countdown">10</span>s)</div>
+            <button id="name-submit-btn" style="background:#0ff; color:#000; border:none; border-radius:8px; padding:12px 32px; font-size:18px; font-family:'Courier New',monospace; cursor:pointer; font-weight:bold;">SUBMIT</button>
+        </div>
+    </div>
+
+    <!-- Leaderboard panel (shown after submitting score) -->
+    <div id="leaderboard-panel" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:1500; background:rgba(0,0,20,0.95); border:2px solid #0ff; border-radius:16px; padding:30px; font-family:'Courier New',monospace; min-width:600px; max-width:90vw; max-height:80vh; overflow-y:auto;">
+        <div style="display:flex; gap:40px; justify-content:space-around;">
+            <div style="flex:1;">
+                <h3 style="color:#0ff; text-shadow:0 0 10px #0ff; margin:0 0 12px; text-align:center;">LOCAL</h3>
+                <ol id="leaderboard-list" style="margin:0; padding-left:20px; color:#fff; font-size:15px; line-height:1.8;"></ol>
+            </div>
+            <div style="flex:1;">
+                <h3 style="color:#0ff; text-shadow:0 0 10px #0ff; margin:0 0 12px; text-align:center;">GLOBAL</h3>
+                <ol id="global-leaderboard-list" style="margin:0; padding-left:20px; color:#fff; font-size:15px; line-height:1.8;"></ol>
+                <div id="global-sync-status" style="color:#888; font-size:12px; margin-top:8px; text-align:center;"></div>
+            </div>
+        </div>
+        <div id="hf-status-msg" style="color:#ff0; font-size:13px; margin-top:16px; text-align:center;"></div>
+        <div style="display:flex; gap:12px; justify-content:center; margin-top:20px; flex-wrap:wrap;">
+            <button id="lb-publish-btn" style="background:#0f0; color:#000; border:none; border-radius:8px; padding:10px 24px; font-size:14px; font-family:'Courier New',monospace; cursor:pointer; display:none;">PUBLISH TO GLOBAL</button>
+            <button id="lb-help-btn" style="background:#333; color:#0ff; border:1px solid #0ff; border-radius:8px; padding:10px 24px; font-size:14px; font-family:'Courier New',monospace; cursor:pointer;">HOW TO PUBLISH?</button>
+        </div>
+        <p style="color:#555; font-size:11px; text-align:center; margin-top:12px;">Hacking the global leaderboard is extremely easy, please don't ruin the fun for others.</p>
+    </div>
+
+    <!-- HuggingFace Help Modal -->
+    <div id="hf-help-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:3000; align-items:center; justify-content:center;">
+        <div style="background:#001a2e; border:2px solid #0ff; border-radius:16px; padding:40px; max-width:600px; width:90%; font-family:'Courier New',monospace; color:#fff; max-height:80vh; overflow-y:auto;">
+            <h3 style="color:#0ff; margin-top:0;">How to Publish Leaderboards</h3>
+            <p>Authenticate to HuggingFace to publish your scores globally.</p>
+            <h4 style="color:#ff0;">Reachy Mini Lite</h4>
+            <pre style="background:#000; padding:12px; border-radius:6px; color:#0f0;">hf auth login</pre>
+            <h4 style="color:#ff0;">Reachy Mini Wireless (via SSH)</h4>
+            <pre style="background:#000; padding:12px; border-radius:6px; color:#0f0;">ssh pollen@reachy-mini.local
+source /venvs/apps_venv/bin/activate
+hf auth login</pre>
+            <p style="color:#888; font-size:13px;">Provide a token with <code>write</code> permissions.</p>
+            <button id="hf-help-close" style="background:#0ff; color:#000; border:none; border-radius:8px; padding:10px 24px; font-size:16px; cursor:pointer; margin-top:10px;">CLOSE</button>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "/static/three.module.js"
+            }
+        }
+    </script>
+    <script type="module" src="/static/main.js?v=202603131"></script>
+</body>
+
+</html>

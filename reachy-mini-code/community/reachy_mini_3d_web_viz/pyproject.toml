@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "reachy-mini-3d-web-viz"
+version = "0.1.0"
+description = "View Reachy URDF with live joint positions using Three.js"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "reachy_mini",
+]
+
+[project.entry-points."reachy_mini_apps"]
+reachy_mini_3d_web_viz = "reachy_mini_3d_web_viz.main:ReachyMini3dWebViz"
+
+
+[tool.setuptools]
+packages = ["reachy_mini_3d_web_viz"]
+
+[tool.setuptools.package-data]
+reachy_mini_3d_web_viz = [
+    "static/*.html",
+    "static/*.css",
+    "static/src/*.js",
+    "static/assets/*.json",
+    "static/assets/*.urdf",
+    "static/assets/meshes_optimized/*.glb",
+]

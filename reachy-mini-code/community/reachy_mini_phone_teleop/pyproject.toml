@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "reachy_mini_phone_teleop"
+version = "0.1.2"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "reachy-mini",
+    "teleop"
+]
+keywords = ["reachy-mini-app"]
+
+[project.entry-points."reachy_mini_apps"]
+reachy_mini_phone_teleop = "reachy_mini_phone_teleop.main:ReachyMiniPhoneTeleop"
+
+[tool.setuptools]
+package-dir = { "" = "." }
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.package-data]
+reachy_mini_phone_teleop = ["**/*"] # Also include all non-.py files

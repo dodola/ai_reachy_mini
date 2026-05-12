@@ -1,0 +1,15 @@
+{
+  "bundle": {
+    "resources": {
+      "python-entitlements.plist": "python-entitlements.plist"
+    },
+    "macOS": {
+      "signingIdentity": "-",
+      "frameworks": [],
+      "minimumSystemVersion": "10.15",
+      "exceptionDomain": "",
+      "entitlements": "entitlements.plist",
+      "infoPlist": "Info.plist"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+[
+  {
+    "name": "FIP",
+    "url": "http://icecast.radiofrance.fr/fip-hifi.aac"
+  },
+  {
+    "name": "FIP Rock",
+    "url": "http://icecast.radiofrance.fr/fiprock-hifi.aac"
+  },
+  {
+    "name": "FIP JAZZ",
+    "url": "http://icecast.radiofrance.fr/fipjazz-hifi.aac"
+  }
+]

@@ -1,0 +1,4 @@
+spaceship_game/assets/screenshot.png filter=lfs diff=lfs merge=lfs -text
+spaceship_game/assets/spaceship_control.gif filter=lfs diff=lfs merge=lfs -text
+spaceship_game/assets/spaceship.gif filter=lfs diff=lfs merge=lfs -text
+spaceship_game/assets/ost.mp3 filter=lfs diff=lfs merge=lfs -text

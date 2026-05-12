@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Hand Tracking</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <header class="header">
+        <h1>Hand Tracking</h1>
+        <img src="/static/reachy-mini-waving.png" class="logo" />
+    </header>
+
+    <main class="container">
+
+        <!-- Camera Feed Card -->
+        <section class="card camera-card">
+            <div class="card-header">
+                <h3>Camera Feed</h3>
+                <label class="toggle">
+                    <input type="checkbox" id="toggle-video">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <p class="desc">
+                Red dot: point the robot is tracking. <br>
+                Blue and green dots: used to calculate the index finger angle to determine antenna orientation.
+            </p>
+
+            <img id="video-feed" src="" class="video-display">
+        </section>
+
+        <!-- Two side cards -->
+        <div class="card-row">
+
+            <!-- Hand Tracking -->
+            <section class="card">
+                <div class="card-header">
+                    <h3>Hand Tracking</h3>
+                    <label class="toggle">
+                        <input type="checkbox" id="toggle-tracking" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <p class="desc">
+                    The system follows your hand in real time.  
+                    If multiple hands are detected, the selected side determines which one is used.
+                </p>
+
+                <div class="option">
+                    <span>Preferred Side:</span>
+                    <select id="side-select">
+                        <option>Left</option>
+                        <option>Right</option>
+                    </select>
+                </div>
+            </section>
+
+            <!-- Antenna Movement -->
+            <section class="card">
+                <div class="card-header">
+                    <h3>Antenna Movement</h3>
+                    <label class="toggle">
+                        <input type="checkbox" id="toggle-antennas" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <p class="desc">
+                    Control both antennas using your index fingers.  
+                    If only one hand is detected, the selected mode decides how both antennas move.
+                </p>
+
+                <div class="option">
+                    <span>Mode:</span>
+                    <select id="antenna-mode">
+                        <option>Same Movement</option>
+                        <option>Symmetric</option>
+                    </select>
+                </div>
+            </section>
+
+        </div>
+    </main>
+    <div id="loading-overlay">
+        <div class="loader">
+            <div class="spinner"></div>
+            <p>Starting Hand Tracking…</p>
+        </div>
+    </div>
+    <script src="/static/main.js"></script>
+</body>
+
+
+
+</html>

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reachy F1 Commentator - Interactive Race Commentary for Reachy Mini</title>
+    <meta name="description" content="An interactive F1 race commentary system for Reachy Mini that generates organic, context-rich commentary with audio synthesis and synchronized robot movements.">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <h1>🏎️ Reachy F1 Commentator</h1>
+                <p class="tagline">Bring Formula 1 races to life with your Reachy Mini robot</p>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <h2>Interactive Race Commentary Meets Robotics</h2>
+                    <p class="lead">Transform your Reachy Mini into an enthusiastic F1 commentator with organic, context-rich commentary, synchronized movements, and professional audio synthesis.</p>
+                    <div class="cta-buttons">
+                        <a href="#installation" class="btn btn-primary">Get Started</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="video-demo">
+            <div class="container">
+                <h2>See It In Action</h2>
+                <div class="video-wrapper">
+                    <iframe 
+                        width="560" 
+                        height="315" 
+                        src="https://www.youtube.com/embed/lnIk2DD-noM" 
+                        title="Reachy F1 Commentator Demo" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        allowfullscreen>
+                    </iframe>
+                </div>
+            </div>
+        </section>
+
+        <section class="leaderboard-demo">
+            <div class="container">
+                <h2>Live Race Dashboard</h2>
+                <p class="section-intro">Track race positions in real-time with our integrated live leaderboard</p>
+                
+                <div class="demo-leaderboard">
+                    <div class="demo-leaderboard-header">
+                        <h3>🏁 Live Leaderboard</h3>
+                        <span class="demo-badge">Live Preview</span>
+                    </div>
+                    
+                    <div class="demo-leaderboard-content">
+                        <div class="demo-position-item position-1">
+                            <div class="demo-position-number">1</div>
+                            <div class="demo-driver-name">Max VERSTAPPEN</div>
+                            <div class="demo-gap leader">Leader</div>
+                            <div class="demo-tire">
+                                <div class="demo-tire-badge soft">S</div>
+                            </div>
+                        </div>
+                        
+                        <div class="demo-position-item position-2">
+                            <div class="demo-position-number">2</div>
+                            <div class="demo-driver-name">Lewis HAMILTON</div>
+                            <div class="demo-gap">+2.345s</div>
+                            <div class="demo-tire">
+                                <div class="demo-tire-badge medium">M</div>
+                            </div>
+                        </div>
+                        
+                        <div class="demo-position-item position-3">
+                            <div class="demo-position-number">3</div>
+                            <div class="demo-driver-name">Charles LECLERC</div>
+                            <div class="demo-gap">+5.891s</div>
+                            <div class="demo-tire">
+                                <div class="demo-tire-badge soft">S</div>
+                            </div>
+                        </div>
+                        
+                        <div class="demo-position-item">
+                            <div class="demo-position-number">4</div>
+                            <div class="demo-driver-name">Sergio PEREZ</div>
+                            <div class="demo-gap">+8.234s</div>
+                            <div class="demo-tire">
+                                <div class="demo-tire-badge hard">H</div>
+                            </div>
+                        </div>
+                        
+                        <div class="demo-position-item">
+                            <div class="demo-position-number">5</div>
+                            <div class="demo-driver-name">Carlos SAINZ</div>
+                            <div class="demo-gap">+12.567s</div>
+                            <div class="demo-tire">
+                                <div class="demo-tire-badge medium">M</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="demo-leaderboard-footer">
+                        <p>Updates in real-time during race playback</p>
+                    </div>
+                </div>
+                
+                <div class="dashboard-features">
+                    <div class="dashboard-feature">
+                        <span class="feature-emoji">🏆</span>
+                        <h4>Podium Highlighting</h4>
+                        <p>Gold, silver, and bronze styling for top 3 positions</p>
+                    </div>
+                    <div class="dashboard-feature">
+                        <span class="feature-emoji">🔴</span>
+                        <h4>Tire Strategy</h4>
+                        <p>Color-coded tire compounds (Soft/Medium/Hard)</p>
+                    </div>
+                    <div class="dashboard-feature">
+                        <span class="feature-emoji">⏱️</span>
+                        <h4>Live Gaps</h4>
+                        <p>Real-time time differences to race leader</p>
+                    </div>
+                    <div class="dashboard-feature">
+                        <span class="feature-emoji">📊</span>
+                        <h4>Full Dashboard</h4>
+                        <p>Detailed view with pit stops, fastest laps, and events</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features">
+            <div class="container">
+                <h2>Features</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🎙️</div>
+                        <h3>Enhanced Organic Commentary</h3>
+                        <p>210 unique templates with 5 excitement levels and 5 perspectives (technical, strategic, dramatic, positional, historical) for natural-sounding commentary that never repeats.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🏁</div>
+                        <h3>Quick Demo Mode</h3>
+                        <p>2-3 minute pre-configured demonstration perfect for showcasing. No internet required - includes overtakes, pit stops, fastest laps, and incidents.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>Full Historical Race Mode</h3>
+                        <p>Replay any F1 race from 2023-2025 using real data from the OpenF1 API. <strong>China 2025</strong> is recommended as it has complete telemetry (221 overtakes, 25 pit stops). Note: Not all races have full data available.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🔊</div>
+                        <h3>Professional Audio Synthesis</h3>
+                        <p>ElevenLabs v3 API with emotional variation support creates natural, expressive commentary. Includes a professional "British Sports Broadcaster" voice out of the box - perfect for authentic F1 commentary that adapts to race excitement.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🤖</div>
+                        <h3>Synchronized Robot Movements</h3>
+                        <p>Reachy's head movements are perfectly synchronized with commentary excitement levels, creating an engaging and lifelike presentation.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🌐</div>
+                        <h3>Intuitive Web Interface</h3>
+                        <p>Browser-based control panel for race selection, playback speed (1x-20x), and configuration. Easy to use, no command-line required.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="how-it-works">
+            <div class="container">
+                <h2>How It Works</h2>
+                <div class="workflow">
+                    <div class="workflow-step">
+                        <div class="step-number">1</div>
+                        <h3>Select Your Race</h3>
+                        <p>Choose from Quick Demo mode or browse historical F1 races from 2023-2025. <strong>Try China 2025 for the best experience</strong> - it has complete telemetry data with 221 overtakes and 25 pit stops. Configure your preferred playback speed (1x-20x).</p>
+                    </div>
+                    
+                    <div class="workflow-step">
+                        <div class="step-number">2</div>
+                        <h3>AI-Powered Commentary Generation</h3>
+                        <p>The system analyzes race events in real-time, enriches context from multiple data sources, and generates organic commentary using 210 unique templates.</p>
+                    </div>
+                    
+                    <div class="workflow-step">
+                        <div class="step-number">3</div>
+                        <h3>Audio Synthesis & Robot Control</h3>
+                        <p>Commentary is converted to natural speech via ElevenLabs, streamed to Reachy's speakers, and synchronized with expressive head movements.</p>
+                    </div>
+                    
+                    <div class="workflow-step">
+                        <div class="step-number">4</div>
+                        <h3>Live Commentary Experience</h3>
+                        <p>Watch as Reachy brings the race to life with dynamic commentary, tracking overtakes, pit stops, fastest laps, and dramatic moments.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="commentary-examples">
+            <div class="container">
+                <h2>Commentary Variations</h2>
+                <p class="section-intro">Every event has multiple commentary variations with different excitement levels and perspectives:</p>
+                
+                <div class="examples-showcase">
+                    <h3>Example: Overtake for P1</h3>
+                    <div class="example-box">
+                        <p>"Fantastic overtake by Hamilton on Verstappen, now in P1!"</p>
+                        <p>"There it is! Hamilton takes the lead from Verstappen!"</p>
+                        <p>"Hamilton makes a brilliant move on Verstappen for P1!"</p>
+                        <p>"And Hamilton is through! That's P1 now for Hamilton!"</p>
+                    </div>
+                    <p class="note">210 unique templates across 5 excitement levels and 5 perspectives ensure fresh, natural-sounding commentary throughout the race</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="technical-highlights">
+            <div class="container">
+                <h2>Technical Highlights</h2>
+                <div class="tech-grid">
+                    <div class="tech-item">
+                        <h4>Context Enrichment</h4>
+                        <p>Pulls data from multiple OpenF1 API endpoints to create rich, contextual commentary with driver stats, team info, and race history.</p>
+                    </div>
+                    
+                    <div class="tech-item">
+                        <h4>Narrative Tracking</h4>
+                        <p>Detects ongoing battles, comebacks, and strategy divergence to create compelling story arcs throughout the race.</p>
+                    </div>
+                    
+                    <div class="tech-item">
+                        <h4>Frequency Controls</h4>
+                        <p>Intelligent tracking prevents repetitive content patterns, ensuring fresh commentary throughout long races.</p>
+                    </div>
+                    
+                    <div class="tech-item">
+                        <h4>Event Prioritization</h4>
+                        <p>Significance scoring with context bonuses ensures the most important moments get the attention they deserve.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="audio-features">
+            <div class="container">
+                <h2>🎙️ Professional Broadcasting Quality</h2>
+                <p class="section-intro">Powered by ElevenLabs v3 API with emotional variation for authentic F1 commentary</p>
+                
+                <div class="audio-showcase">
+                    <div class="audio-highlight">
+                        <div class="audio-icon">🎭</div>
+                        <h3>Emotional Variation</h3>
+                        <p>Using the latest ElevenLabs v3 API, commentary dynamically adjusts tone and emotion based on race excitement. From calm strategic analysis to thrilling overtake moments, the voice naturally adapts to match the action.</p>
+                    </div>
+                    
+                    <div class="audio-highlight">
+                        <div class="audio-icon">🇬🇧</div>
+                        <h3>British Sports Broadcaster Voice</h3>
+                        <p>Includes a professional "British Sports Broadcaster" voice out of the box - no configuration needed. The authentic accent and delivery style creates an immersive F1 experience that feels like watching live coverage.</p>
+                    </div>
+                    
+                    <div class="audio-highlight">
+                        <div class="audio-icon">⚡</div>
+                        <h3>Streaming Audio</h3>
+                        <p>Low-latency streaming ensures commentary stays synchronized with race events. Audio begins playing within milliseconds of generation, creating a seamless real-time experience.</p>
+                    </div>
+                </div>
+                
+                <div class="audio-examples">
+                    <h3>Emotional Range Examples</h3>
+                    <div class="emotion-grid">
+                        <div class="emotion-example">
+                            <span class="emotion-level">😐 Calm</span>
+                            <p>"Hamilton maintains position in P2, managing the gap to Verstappen ahead."</p>
+                        </div>
+                        <div class="emotion-example">
+                            <span class="emotion-level">😊 Interested</span>
+                            <p>"Leclerc is closing in on Perez - this could get interesting!"</p>
+                        </div>
+                        <div class="emotion-example">
+                            <span class="emotion-level">😃 Excited</span>
+                            <p>"Hamilton is right on Verstappen's gearbox - DRS enabled!"</p>
+                        </div>
+                        <div class="emotion-example">
+                            <span class="emotion-level">🤩 Thrilled</span>
+                            <p>"THERE IT IS! Hamilton takes the lead! What a move!"</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="installation" class="installation">
+            <div class="container">
+                <h2>Installation</h2>
+                
+                <div class="install-methods">
+                    <div class="install-card primary">
+                        <h3>🎯 Via Reachy Dashboard (Recommended)</h3>
+                        <ol class="install-steps">
+                            <li>Open your Reachy Mini dashboard at <code>http://reachy-mini:8000</code></li>
+                            <li>Navigate to the <strong>Apps</strong> section</li>
+                            <li>Find <strong>Reachy F1 Commentator</strong> in the app store</li>
+                            <li>Click <strong>Install</strong> - all dependencies are handled automatically</li>
+                        </ol>
+                        <p class="method-note">✨ The easiest way to install - one-click installation with automatic dependency management.</p>
+                    </div>
+                    
+                    <div class="install-card">
+                        <h3>Via Reachy Mini App Assistant</h3>
+                        <div class="code-block">
+                            <code>reachy-mini-app-assistant install reachy-f1-commentator</code>
+                        </div>
+                        <p class="method-note">Command-line installation for users who prefer terminal access.</p>
+                    </div>
+                    
+                    <div class="install-card">
+                        <h3>Manual Installation (Advanced)</h3>
+                        <div class="code-block">
+                            <code>pip install git+https://huggingface.co/spaces/d10g/reachy-f1-commentator</code>
+                        </div>
+                        <p class="method-note">For advanced users or custom installations.</p>
+                    </div>
+                </div>
+
+                <div class="requirements">
+                    <h3>Requirements</h3>
+                    <ul>
+                        <li><strong>Reachy Mini</strong> robot (or simulation mode for development)</li>
+                        <li><strong>Python 3.9+</strong></li>
+                        <li><strong>ElevenLabs API Key</strong> for audio synthesis (<a href="https://elevenlabs.io/" target="_blank">sign up here</a>) - British Sports Broadcaster voice included</li>
+                        <li><strong>Internet Connection</strong> for Full Historical Race mode</li>
+                    </ul>
+                    <p class="note"><em>💡 Tip: Start with <strong>China 2025</strong> for the best historical race experience - it has complete overtake, pit stop, and race control data.</em></p>
+                </div>
+            </div>
+        </section>
+
+        <section class="usage">
+            <div class="container">
+                <h2>Quick Start</h2>
+                <div class="usage-steps">
+                    <div class="usage-step">
+                        <h3>1. Launch the App</h3>
+                        <p>Start from the Reachy Mini dashboard or run directly:</p>
+                        <div class="code-block">
+                            <code>python -m reachy_f1_commentator.main</code>
+                        </div>
+                    </div>
+                    
+                    <div class="usage-step">
+                        <h3>2. Open Web Interface</h3>
+                        <p>Navigate to <code>http://reachy-mini:8080</code> in your browser to access the control panel.</p>
+                    </div>
+                    
+                    <div class="usage-step">
+                        <h3>3. Configure & Start</h3>
+                        <p>Enter your ElevenLabs API key, select a race or demo mode, choose playback speed, and hit Start Commentary!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="architecture">
+            <div class="container">
+                <h2>Architecture</h2>
+                <p class="section-intro">Built with modern Python and designed for extensibility:</p>
+                <div class="arch-diagram">
+                    <div class="arch-layer">
+                        <h4>Web Interface</h4>
+                        <p>FastAPI + HTML/CSS/JS</p>
+                    </div>
+                    <div class="arch-arrow">↓</div>
+                    <div class="arch-layer">
+                        <h4>Commentary Engine</h4>
+                        <p>Template Library + Context Enricher + Narrative Tracker</p>
+                    </div>
+                    <div class="arch-arrow">↓</div>
+                    <div class="arch-layer">
+                        <h4>Output Layer</h4>
+                        <p>Speech Synthesizer + Motion Controller</p>
+                    </div>
+                    <div class="arch-arrow">↓</div>
+                    <div class="arch-layer">
+                        <h4>Reachy Mini</h4>
+                        <p>Audio Playback + Head Movements</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="credits">
+            <div class="container">
+                <h2>Credits & Acknowledgments</h2>
+                <div class="credits-grid">
+                    <div class="credit-item">
+                        <h4>Pollen Robotics</h4>
+                        <p>Reachy Mini platform and SDK</p>
+                    </div>
+                    <div class="credit-item">
+                        <h4>Hugging Face</h4>
+                        <p>App hosting and distribution</p>
+                    </div>
+                    <div class="credit-item">
+                        <h4>OpenF1</h4>
+                        <p>Historical race data API</p>
+                    </div>
+                    <div class="credit-item">
+                        <h4>ElevenLabs</h4>
+                        <p>Text-to-speech synthesis</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta-final">
+            <div class="container">
+                <h2>Ready to Get Started?</h2>
+                <p>Install Reachy F1 Commentator today and bring Formula 1 races to life with your robot!</p>
+                <div class="cta-buttons">
+                    <a href="#installation" class="btn btn-primary">Install Now</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Reachy F1 Commentator - MIT License</p>
+            <p>Built with ❤️ for the Reachy Mini community</p>
+        </div>
+    </footer>
+</body>
+</html>

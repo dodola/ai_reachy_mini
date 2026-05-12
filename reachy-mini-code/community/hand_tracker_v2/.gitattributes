@@ -1,0 +1,4 @@
+reachy-mini-demo-dashboard.gif filter=lfs diff=lfs merge=lfs -text
+reachy-mini-hand-tracking.gif filter=lfs diff=lfs merge=lfs -text
+reachy-mini-waving.png filter=lfs diff=lfs merge=lfs -text
+assets/reachy_mini_move_antenna.gif filter=lfs diff=lfs merge=lfs -text

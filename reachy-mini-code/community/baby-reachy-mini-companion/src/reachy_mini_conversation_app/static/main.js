@@ -1,0 +1,530 @@
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 2000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(id);
+  }
+}
+
+async function waitForPersonalityData(timeoutMs = 15000) {
+  const loadingText = document.querySelector("#loading p");
+  let attempts = 0;
+  const deadline = Date.now() + timeoutMs;
+  while (true) {
+    attempts += 1;
+    try {
+      const url = new URL("/personalities", window.location.origin);
+      url.searchParams.set("_", Date.now().toString());
+      const resp = await fetchWithTimeout(url, {}, 2000);
+      if (resp.ok) return await resp.json();
+    } catch (e) {}
+
+    if (loadingText) {
+      loadingText.textContent = attempts > 8 ? "Starting backend…" : "Loading…";
+    }
+    if (Date.now() >= deadline) return null;
+    await sleep(500);
+  }
+}
+
+// ---------- Local LLM Settings API ----------
+async function fetchLocalLlmSettings() {
+  try {
+    const url = new URL("/local_llm_settings", window.location.origin);
+    url.searchParams.set("_", Date.now().toString());
+    const resp = await fetchWithTimeout(url, {}, 2000);
+    if (resp.ok) return await resp.json();
+  } catch (e) {}
+  return {};
+}
+
+async function startApp(settings) {
+  const resp = await fetch("/start_app", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(settings),
+  });
+  if (!resp.ok) {
+    const data = await resp.json().catch(() => ({}));
+    throw new Error(data.error || "start_failed");
+  }
+  return await resp.json();
+}
+
+async function fetchAppState() {
+  try {
+    const url = new URL("/app_state", window.location.origin);
+    url.searchParams.set("_", Date.now().toString());
+    const resp = await fetchWithTimeout(url, {}, 2000);
+    if (resp.ok) return await resp.json();
+  } catch (e) {}
+  return { state: "configuring" };
+}
+
+// ---------- Feature Settings API ----------
+async function fetchFeatureSettings() {
+  try {
+    const url = new URL("/feature_settings", window.location.origin);
+    url.searchParams.set("_", Date.now().toString());
+    const resp = await fetchWithTimeout(url, {}, 2000);
+    if (resp.ok) return await resp.json();
+  } catch (e) {}
+  return {};
+}
+
+function getFeatureSettings() {
+  return {
+    FEATURE_CRY_DETECTION: document.getElementById("feat-cry-detection").checked ? "true" : "false",
+    FEATURE_AUTO_SOOTHE: document.getElementById("feat-auto-soothe").checked ? "true" : "false",
+    FEATURE_DANGER_DETECTION: document.getElementById("feat-danger-detection").checked ? "true" : "false",
+    FEATURE_STORY_TIME: document.getElementById("feat-story-time").checked ? "true" : "false",
+    FEATURE_SIGNAL_ALERTS: document.getElementById("feat-signal-alerts").checked ? "true" : "false",
+    SIGNAL_USER_PHONE: (document.getElementById("signal-phone").value || "").trim(),
+  };
+}
+
+function applyFeatureSettings(settings) {
+  document.getElementById("feat-cry-detection").checked = settings.FEATURE_CRY_DETECTION !== false;
+  document.getElementById("feat-auto-soothe").checked = settings.FEATURE_AUTO_SOOTHE !== false;
+  document.getElementById("feat-danger-detection").checked = settings.FEATURE_DANGER_DETECTION !== false;
+  document.getElementById("feat-story-time").checked = settings.FEATURE_STORY_TIME !== false;
+  document.getElementById("feat-signal-alerts").checked = settings.FEATURE_SIGNAL_ALERTS !== false;
+  document.getElementById("signal-phone").value = settings.SIGNAL_USER_PHONE || "";
+  // Show/hide phone field
+  show(document.getElementById("signal-phone-row"), settings.FEATURE_SIGNAL_ALERTS !== false);
+  // Mic gain
+  const gain = settings.MIC_GAIN != null ? settings.MIC_GAIN : 1.0;
+  document.getElementById("mic-gain").value = gain;
+  document.getElementById("mic-gain-value").textContent = gain;
+}
+
+// ---------- Personalities API ----------
+async function getPersonalities() {
+  const url = new URL("/personalities", window.location.origin);
+  url.searchParams.set("_", Date.now().toString());
+  const resp = await fetchWithTimeout(url, {}, 2000);
+  if (!resp.ok) throw new Error("list_failed");
+  return await resp.json();
+}
+
+async function loadPersonality(name) {
+  const url = new URL("/personalities/load", window.location.origin);
+  url.searchParams.set("name", name);
+  url.searchParams.set("_", Date.now().toString());
+  const resp = await fetchWithTimeout(url, {}, 3000);
+  if (!resp.ok) throw new Error("load_failed");
+  return await resp.json();
+}
+
+async function savePersonality(payload) {
+  // Try JSON POST first
+  const saveUrl = new URL("/personalities/save", window.location.origin);
+  saveUrl.searchParams.set("_", Date.now().toString());
+  let resp = await fetchWithTimeout(saveUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  }, 5000);
+  if (resp.ok) return await resp.json();
+
+  // Fallback to form-encoded POST
+  try {
+    const form = new URLSearchParams();
+    form.set("name", payload.name || "");
+    form.set("instructions", payload.instructions || "");
+    form.set("tools_text", payload.tools_text || "");
+    form.set("voice", payload.voice || "cedar");
+    const url = new URL("/personalities/save_raw", window.location.origin);
+    url.searchParams.set("_", Date.now().toString());
+    resp = await fetchWithTimeout(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: form.toString(),
+    }, 5000);
+    if (resp.ok) return await resp.json();
+  } catch {}
+
+  // Fallback to GET (query params)
+  try {
+    const url = new URL("/personalities/save_raw", window.location.origin);
+    url.searchParams.set("name", payload.name || "");
+    url.searchParams.set("instructions", payload.instructions || "");
+    url.searchParams.set("tools_text", payload.tools_text || "");
+    url.searchParams.set("voice", payload.voice || "cedar");
+    url.searchParams.set("_", Date.now().toString());
+    resp = await fetchWithTimeout(url, { method: "GET" }, 5000);
+    if (resp.ok) return await resp.json();
+  } catch {}
+
+  const data = await resp.json().catch(() => ({}));
+  throw new Error(data.error || "save_failed");
+}
+
+async function applyPersonality(name, { persist = false } = {}) {
+  // Send as query param to avoid any body parsing issues on the server
+  const url = new URL("/personalities/apply", window.location.origin);
+  url.searchParams.set("name", name || "");
+  if (persist) {
+    url.searchParams.set("persist", "1");
+  }
+  url.searchParams.set("_", Date.now().toString());
+  const resp = await fetchWithTimeout(url, { method: "POST" }, 5000);
+  if (!resp.ok) {
+    const data = await resp.json().catch(() => ({}));
+    throw new Error(data.error || "apply_failed");
+  }
+  return await resp.json();
+}
+
+async function getVoices() {
+  try {
+    const url = new URL("/voices", window.location.origin);
+    url.searchParams.set("_", Date.now().toString());
+    const resp = await fetchWithTimeout(url, {}, 3000);
+    if (!resp.ok) throw new Error("voices_failed");
+    return await resp.json();
+  } catch (e) {
+    return ["cedar"];
+  }
+}
+
+function show(el, flag) {
+  el.classList.toggle("hidden", !flag);
+}
+
+async function init() {
+  const loading = document.getElementById("loading");
+  show(loading, true);
+  const personalityPanel = document.getElementById("personality-panel");
+
+  // Local LLM elements
+  const localLlmPanel = document.getElementById("local-llm-panel");
+  const localLlmChip = document.getElementById("local-llm-chip");
+  const localRunningPanel = document.getElementById("local-running-panel");
+  const localRunningInfo = document.getElementById("local-running-info");
+  const llmUrlInput = document.getElementById("llm-url");
+  const llmModelInput = document.getElementById("llm-model");
+  const llmApiKeyInput = document.getElementById("llm-api-key");
+  const sttModelSelect = document.getElementById("stt-model");
+  const startLocalBtn = document.getElementById("start-local-btn");
+  const localLlmStatus = document.getElementById("local-llm-status");
+  const micGainSlider = document.getElementById("mic-gain");
+  const micGainValue = document.getElementById("mic-gain-value");
+  const testLlmBtn = document.getElementById("test-llm-btn");
+  const testLlmStatus = document.getElementById("test-llm-status");
+  const testMicBtn = document.getElementById("test-mic-btn");
+  const testMicStatus = document.getElementById("test-mic-status");
+  const micDeviceSelect = document.getElementById("mic-device");
+
+  // Features panel
+  const featuresPanel = document.getElementById("features-panel");
+  const startPanel = document.getElementById("start-panel");
+  const signalToggle = document.getElementById("feat-signal-alerts");
+  const signalPhoneRow = document.getElementById("signal-phone-row");
+
+  // Personality elements
+  const pSelect = document.getElementById("personality-select");
+  const pApply = document.getElementById("apply-personality");
+  const pPersist = document.getElementById("persist-personality");
+  const pNew = document.getElementById("new-personality");
+  const pSave = document.getElementById("save-personality");
+  const pStartupLabel = document.getElementById("startup-label");
+  const pName = document.getElementById("personality-name");
+  const pInstr = document.getElementById("instructions-ta");
+  const pStatus = document.getElementById("personality-status");
+  const pVoice = document.getElementById("voice-select");
+
+  // Hidden tools_text for round-tripping saves (not displayed in UI)
+  let _toolsText = "";
+
+  show(personalityPanel, false);
+  show(localLlmPanel, false);
+  show(localRunningPanel, false);
+  show(featuresPanel, false);
+  show(startPanel, false);
+
+  // Collapsible panels: click heading to toggle
+  document.querySelectorAll(".panel-toggle").forEach((heading) => {
+    heading.addEventListener("click", () => {
+      heading.closest(".collapsible").classList.toggle("collapsed");
+    });
+  });
+
+  // -- State transition helpers --
+  function showRunningState(model, stt) {
+    show(localLlmPanel, false);
+    show(featuresPanel, false);
+    show(startPanel, false);
+    show(localRunningPanel, true);
+    localRunningInfo.textContent = `Model: ${model || "—"} | STT: ${stt || "—"}`;
+  }
+
+  // Check if pipeline is already running (e.g., page refresh after start)
+  const appState = await fetchAppState();
+  if (appState.state === "running") {
+    const runSettings = await fetchLocalLlmSettings();
+    showRunningState(runSettings.LOCAL_LLM_MODEL, runSettings.LOCAL_STT_MODEL);
+  } else {
+    // Show configuration form
+    const settings = await fetchLocalLlmSettings();
+    llmUrlInput.value = settings.LOCAL_LLM_URL || "http://localhost:11434/v1";
+    llmModelInput.value = settings.LOCAL_LLM_MODEL || "ministral-3:3b";
+    llmApiKeyInput.value = settings.LOCAL_LLM_API_KEY || "ollama";
+    sttModelSelect.value = settings.LOCAL_STT_MODEL || "small.en";
+    localLlmChip.textContent = "Configure";
+    localLlmChip.className = "chip";
+    show(localLlmPanel, true);
+
+    // Load and show features panel + start button
+    const featureSettings = await fetchFeatureSettings();
+    applyFeatureSettings(featureSettings);
+    show(featuresPanel, true);
+    show(startPanel, true);
+
+    // Populate mic device selector
+    try {
+      const devResp = await fetchWithTimeout("/audio_devices", {}, 3000);
+      if (devResp.ok) {
+        const devData = await devResp.json();
+        micDeviceSelect.innerHTML = "";
+        for (const d of devData.devices) {
+          const opt = document.createElement("option");
+          opt.value = d.index;
+          opt.textContent = `[${d.index}] ${d.name} (${d.channels}ch, ${d.samplerate}Hz)`;
+          if (d.is_default) opt.textContent += " - Default";
+          micDeviceSelect.appendChild(opt);
+        }
+        // Pre-select the default input device
+        if (devData.default != null) {
+          micDeviceSelect.value = devData.default;
+        }
+      }
+    } catch {}
+
+    // Wire mic gain slider label
+    micGainSlider.addEventListener("input", () => {
+      micGainValue.textContent = micGainSlider.value;
+    });
+
+    // Test LLM connection
+    testLlmBtn.addEventListener("click", async () => {
+      testLlmStatus.textContent = "Testing...";
+      testLlmStatus.className = "status";
+      testLlmBtn.disabled = true;
+      try {
+        const resp = await fetch("/test_llm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            LOCAL_LLM_URL: llmUrlInput.value.trim(),
+            LOCAL_LLM_MODEL: llmModelInput.value.trim(),
+            LOCAL_LLM_API_KEY: llmApiKeyInput.value.trim(),
+          }),
+        });
+        const data = await resp.json();
+        testLlmStatus.textContent = data.message;
+        testLlmStatus.className = "status " + (data.verdict === "ok" ? "ok" : data.verdict === "model_missing" ? "warn" : "error");
+      } catch (e) {
+        testLlmStatus.textContent = "Test failed: " + e.message;
+        testLlmStatus.className = "status error";
+      }
+      testLlmBtn.disabled = false;
+    });
+
+    // Test microphone (uses selected device)
+    testMicBtn.addEventListener("click", async () => {
+      testMicStatus.textContent = "Recording 1.5s...";
+      testMicStatus.className = "status";
+      testMicBtn.disabled = true;
+      try {
+        const resp = await fetch("/test_mic", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            MIC_GAIN: micGainSlider.value,
+            MIC_DEVICE: micDeviceSelect.value,
+          }),
+        });
+        const data = await resp.json();
+        testMicStatus.textContent = data.message;
+        testMicStatus.className = "status " + (data.verdict === "ok" ? "ok" : data.verdict === "too_quiet" ? "warn" : "error");
+      } catch (e) {
+        testMicStatus.textContent = "Test failed: " + e.message;
+        testMicStatus.className = "status error";
+      }
+      testMicBtn.disabled = false;
+    });
+
+    // Wire Signal toggle to show/hide phone field
+    signalToggle.addEventListener("change", () => {
+      show(signalPhoneRow, signalToggle.checked);
+    });
+
+    startLocalBtn.addEventListener("click", async () => {
+      localLlmStatus.textContent = "Starting pipeline...";
+      localLlmStatus.className = "status";
+      startLocalBtn.disabled = true;
+      try {
+        await startApp({
+          LOCAL_LLM_URL: llmUrlInput.value.trim(),
+          LOCAL_LLM_MODEL: llmModelInput.value.trim(),
+          LOCAL_LLM_API_KEY: llmApiKeyInput.value.trim(),
+          LOCAL_STT_MODEL: sttModelSelect.value,
+          MIC_GAIN: micGainSlider.value,
+          MIC_DEVICE: micDeviceSelect.value,
+          ...getFeatureSettings(),
+        });
+        showRunningState(llmModelInput.value.trim(), sttModelSelect.value);
+      } catch (e) {
+        localLlmStatus.textContent = "Failed to start. Check your settings and try again.";
+        localLlmStatus.className = "status error";
+        startLocalBtn.disabled = false;
+      }
+    });
+  }
+
+  // Wait until backend routes are ready before rendering personalities UI
+  const list = (await waitForPersonalityData()) || { choices: [] };
+  if (!list.choices.length) {
+    pStatus.textContent = "Personality endpoints not ready yet. Retry shortly.";
+    pStatus.className = "status warn";
+    show(loading, false);
+    return;
+  }
+
+  // Initialize personalities UI
+  try {
+    const choices = Array.isArray(list.choices) ? list.choices : [];
+    const DEFAULT_OPTION = choices[0] || "(built-in default)";
+    const startupChoice = choices.includes(list.startup) ? list.startup : DEFAULT_OPTION;
+    const currentChoice = choices.includes(list.current) ? list.current : startupChoice;
+
+    function setStartupLabel(name) {
+      const display = name && name !== DEFAULT_OPTION ? name : "Built-in default";
+      pStartupLabel.textContent = `Launch on start: ${display}`;
+    }
+
+    // Populate select
+    pSelect.innerHTML = "";
+    for (const n of choices) {
+      const opt = document.createElement("option");
+      opt.value = n;
+      opt.textContent = n;
+      pSelect.appendChild(opt);
+    }
+    if (choices.length) {
+      const preferred = choices.includes(startupChoice) ? startupChoice : currentChoice;
+      pSelect.value = preferred;
+    }
+    const voices = await getVoices();
+    pVoice.innerHTML = "";
+    for (const v of voices) {
+      const opt = document.createElement("option");
+      opt.value = v;
+      opt.textContent = v;
+      pVoice.appendChild(opt);
+    }
+    setStartupLabel(startupChoice);
+
+    async function loadSelected() {
+      const selected = pSelect.value;
+      const data = await loadPersonality(selected);
+      pInstr.value = data.instructions || "";
+      _toolsText = data.tools_text || "";
+      pVoice.value = data.voice || "cedar";
+      // Default name field to last segment of selection
+      const idx = selected.lastIndexOf("/");
+      pName.value = idx >= 0 ? selected.slice(idx + 1) : "";
+      pStatus.textContent = `Loaded ${selected}`;
+      pStatus.className = "status";
+    }
+
+    pSelect.addEventListener("change", loadSelected);
+    await loadSelected();
+    show(personalityPanel, true);
+
+    pApply.addEventListener("click", async () => {
+      pStatus.textContent = "Applying...";
+      pStatus.className = "status";
+      try {
+        const res = await applyPersonality(pSelect.value);
+        if (res.startup) setStartupLabel(res.startup);
+        pStatus.textContent = res.status || "Applied.";
+        pStatus.className = "status ok";
+      } catch (e) {
+        pStatus.textContent = `Failed to apply${e.message ? ": " + e.message : ""}`;
+        pStatus.className = "status error";
+      }
+    });
+
+    pPersist.addEventListener("click", async () => {
+      pStatus.textContent = "Saving for startup...";
+      pStatus.className = "status";
+      try {
+        const res = await applyPersonality(pSelect.value, { persist: true });
+        if (res.startup) setStartupLabel(res.startup);
+        pStatus.textContent = res.status || "Saved for startup.";
+        pStatus.className = "status ok";
+      } catch (e) {
+        pStatus.textContent = `Failed to persist${e.message ? ": " + e.message : ""}`;
+        pStatus.className = "status error";
+      }
+    });
+
+    pNew.addEventListener("click", () => {
+      pName.value = "";
+      pInstr.value = "# Write your instructions here\n# e.g., Keep responses concise and friendly.";
+      _toolsText = "";
+      pVoice.value = "cedar";
+      pStatus.textContent = "Fill fields and click Save.";
+      pStatus.className = "status";
+    });
+
+    pSave.addEventListener("click", async () => {
+      const name = (pName.value || "").trim();
+      if (!name) {
+        pStatus.textContent = "Enter a valid name.";
+        pStatus.className = "status warn";
+        return;
+      }
+      pStatus.textContent = "Saving...";
+      pStatus.className = "status";
+      try {
+        const res = await savePersonality({
+          name,
+          instructions: pInstr.value || "",
+          tools_text: _toolsText,
+          voice: pVoice.value || "cedar",
+        });
+        // Refresh select choices
+        pSelect.innerHTML = "";
+        for (const n of res.choices) {
+          const opt = document.createElement("option");
+          opt.value = n;
+          opt.textContent = n;
+          if (n === res.value) opt.selected = true;
+          pSelect.appendChild(opt);
+        }
+        pStatus.textContent = "Saved.";
+        pStatus.className = "status ok";
+        // Auto-apply
+        try { await applyPersonality(pSelect.value); } catch {}
+      } catch (e) {
+        pStatus.textContent = "Failed to save.";
+        pStatus.className = "status error";
+      }
+    });
+  } catch (e) {
+    pStatus.textContent = "UI failed to load. Please refresh.";
+    pStatus.className = "status warn";
+  } finally {
+    // Hide loading when initial setup is done (regardless of key presence)
+    show(loading, false);
+  }
+}
+
+window.addEventListener("DOMContentLoaded", init);

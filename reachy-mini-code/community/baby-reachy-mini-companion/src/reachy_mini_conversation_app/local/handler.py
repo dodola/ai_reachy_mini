@@ -1,0 +1,932 @@
+from __future__ import annotations
+import os
+import re
+import json
+import time
+import asyncio
+import logging
+import tempfile
+from typing import TYPE_CHECKING, Tuple, Optional
+from collections import deque
+
+import numpy as np
+from fastrtc import AdditionalOutputs, AsyncStreamHandler, wait_for_item
+from scipy.signal import resample
+
+from reachy_mini_conversation_app.config import config
+from reachy_mini_conversation_app.prompts import get_session_instructions
+from reachy_mini_conversation_app.local.llm import LocalLLM
+from reachy_mini_conversation_app.tools.core_tools import ToolDependencies, get_tool_specs, dispatch_tool_call
+from reachy_mini_conversation_app.input.signal_interface import SignalInterface
+
+
+if TYPE_CHECKING:
+    from reachy_mini_conversation_app.local.stt import LocalSTT
+    from reachy_mini_conversation_app.local.tts import LocalTTS
+    from reachy_mini_conversation_app.local.vad import SileroVAD
+    from reachy_mini_conversation_app.audio.classifier import AudioClassifier
+
+
+logger = logging.getLogger(__name__)
+
+
+class LocalSessionHandler(AsyncStreamHandler):
+    """Local processing handler for Reachy Mini (VAD -> STT -> LLM -> TTS + Signal)."""
+
+    def __init__(
+        self,
+        deps: ToolDependencies,
+        llm_url: Optional[str] = None,
+        llm_model: Optional[str] = None,
+        enable_signal: bool = True,
+    ):
+        """Initialize the local session handler."""
+        super().__init__(
+            expected_layout="mono",
+            output_sample_rate=24000,
+            input_sample_rate=16000,
+        )
+        self.deps = deps
+        # Inject speech callback into dependencies so tools like 'speak' can use it
+        self.deps.speak_func = self._process_sentence
+
+        self.llm_url = llm_url or config.LOCAL_LLM_URL
+        self.llm_model = llm_model or config.LOCAL_LLM_MODEL
+        self.enable_signal = enable_signal
+
+        self.output_queue: asyncio.Queue[object] = asyncio.Queue()
+        self.audio_buffer: list[np.ndarray] = []
+        self.lookback_buffer: deque[np.ndarray] = deque(maxlen=20)  # 20 * 32ms = 640ms lookback
+        self.vad_buffer = np.array([], dtype=np.float32)
+
+        # Audio Classification Buffer (1s window)
+        self.classifier_buffer = np.array([], dtype=np.float32)
+        self.classifier: Optional[AudioClassifier] = None
+        self.last_cry_time: float = 0.0
+
+        # Vision Danger Detection
+        self.danger_detector = None
+        self.danger_detection_task: Optional[asyncio.Task[None]] = None
+        self.last_danger_time: float = 0.0
+
+        self.is_speaking = False
+        self.silence_chunks = 0
+        self.speech_chunks = 0
+
+        # Initialize models lazily or in start_up
+        self.vad: Optional[SileroVAD] = None
+        self.stt: Optional[LocalSTT] = None
+        self.llm: Optional[LocalLLM] = None
+        self.tts: Optional[LocalTTS] = None
+        self.pipeline_task: Optional[asyncio.Task[None]] = None
+        self._receive_frame_count = 0
+
+        # Echo suppression: prevent VAD from triggering on robot's own TTS output
+        self._active_pipeline_count = 0
+        self._suppress_vad_until = 0.0
+        self._playback_end_mono = 0.0  # estimated monotonic time when speaker finishes
+
+        # Signal integration
+        self.signal: Optional[SignalInterface] = None
+        self.signal_polling_task: Optional[asyncio.Task[None]] = None
+        self.user_phone = config.SIGNAL_USER_PHONE
+
+        # Tool specs cache (rebuilt in start_up with feature-based exclusions)
+        self.tool_specs = get_tool_specs()
+
+    def copy(self) -> "LocalSessionHandler":
+        """Create a copy of the handler."""
+        return LocalSessionHandler(self.deps, self.llm_url, self.llm_model, self.enable_signal)
+
+    def _build_tool_exclusions(self) -> list[str]:
+        """Build tool exclusion list based on feature flags."""
+        exclusions: list[str] = []
+        if not config.FEATURE_AUTO_SOOTHE:
+            exclusions.extend(["soothe_baby", "check_baby_crying"])
+        if not config.FEATURE_STORY_TIME:
+            exclusions.append("story_time")
+        if not config.FEATURE_SIGNAL_ALERTS:
+            exclusions.extend(["send_signal", "send_signal_photo"])
+        if not config.FEATURE_DANGER_DETECTION:
+            exclusions.append("check_danger")
+        return exclusions
+
+    async def start_up(self):
+        """Initialize local models."""
+        logger.info("Initializing Local AI Pipeline...")
+
+        # Lazy imports: these pull in heavy deps (torch, faster-whisper, kokoro-onnx, onnxruntime)
+        # at import time, so we defer to avoid slowing down module loading.
+        from reachy_mini_conversation_app.local.stt import LocalSTT
+        from reachy_mini_conversation_app.local.tts import LocalTTS
+        from reachy_mini_conversation_app.local.vad import SileroVAD
+
+        try:
+            # Rebuild tool specs with feature-based exclusions
+            exclusions = self._build_tool_exclusions()
+            if exclusions:
+                logger.info(f"Feature flags: excluding tools {exclusions}")
+            self.tool_specs = get_tool_specs(exclusion_list=exclusions)
+
+            logger.info("Loading VAD (Silero)...")
+            self.vad = await asyncio.to_thread(SileroVAD)
+
+            logger.info(f"Loading STT (Faster-Whisper {config.LOCAL_STT_MODEL})...")
+            self.stt = await asyncio.to_thread(LocalSTT, model_size=config.LOCAL_STT_MODEL)
+
+            logger.info("Loading LLM Client...")
+            self.llm = LocalLLM(base_url=self.llm_url, model=self.llm_model)
+
+            logger.info("Loading TTS (Kokoro)...")
+            self.tts = await asyncio.to_thread(LocalTTS)
+
+            # Audio Classifier (YAMNet) — gated by feature flag
+            if config.FEATURE_CRY_DETECTION:
+                logger.info("Loading Audio Classifier (YAMNet)...")
+                try:
+                    from reachy_mini_conversation_app.audio.classifier import AudioClassifier
+
+                    self.classifier = await asyncio.to_thread(AudioClassifier)
+                except ImportError:
+                    logger.info("onnxruntime not installed, audio classification disabled.")
+                except Exception as e:
+                    logger.warning(f"Audio Classifier failed to load: {e}")
+            else:
+                logger.info("Baby cry detection disabled by feature flag.")
+
+            # Load system prompt
+            logger.info("Setting system prompt...")
+            self.llm.set_system_prompt(get_session_instructions())
+
+            # Pre-warm LLM with tools to avoid cold start delay
+            logger.info("Pre-warming LLM with tools...")
+            try:
+                async for _ in self.llm.chat_stream(user_text="hi", tools=self.tool_specs):
+                    pass
+                # Clear history after warmup
+                self.llm.history = []
+                logger.info("LLM pre-warm complete.")
+            except Exception as e:
+                logger.warning(f"LLM pre-warm failed (non-critical): {e}")
+
+            # Danger Detector (YOLO) — gated by feature flag
+            if config.FEATURE_DANGER_DETECTION and self.deps.camera_worker is not None:
+                logger.info("Loading Danger Detector (YOLO)...")
+                try:
+                    from reachy_mini_conversation_app.vision.danger_detector import DangerDetector
+
+                    self.danger_detector = await asyncio.to_thread(DangerDetector)  # type: ignore[func-returns-value,arg-type]
+                    self.danger_detection_task = asyncio.create_task(self._poll_danger_detection())
+                    logger.info("Danger detection started.")
+                except ImportError:
+                    logger.info("YOLO not installed, danger detection disabled.")
+                except Exception as e:
+                    logger.warning(f"Danger Detector failed to load: {e}")
+            elif not config.FEATURE_DANGER_DETECTION:
+                logger.info("Danger detection disabled by feature flag.")
+
+            # Signal — gated by feature flag
+            if self.enable_signal and config.FEATURE_SIGNAL_ALERTS:
+                self.signal = SignalInterface()
+                if self.signal.available:
+                    self.signal_polling_task = asyncio.create_task(self._poll_signal())
+                    logger.info("Signal polling started.")
+                else:
+                    logger.info("Signal not available, skipping.")
+            elif not config.FEATURE_SIGNAL_ALERTS:
+                logger.info("Signal alerts disabled by feature flag.")
+
+            logger.info("Local Pipeline Ready.")
+        except (Exception, SystemExit) as e:
+            logger.error(f"Failed to initialize local pipeline: {e}")
+            logger.error("Pipeline will remain inactive. The settings dashboard is still accessible.")
+
+    async def receive(self, frame: Tuple[int, np.ndarray]) -> None:
+        """Process incoming audio frame."""
+        sr, audio = frame
+        self._receive_frame_count += 1
+
+        # Log audio diagnostics on first frame and periodically
+        if self._receive_frame_count == 1:
+            logger.info(
+                f"Audio frame: dtype={audio.dtype}, shape={audio.shape}, "
+                f"sr={sr}, min={audio.min():.6f}, max={audio.max():.6f}, "
+                f"vad_loaded={self.vad is not None}"
+            )
+
+        # 1. Convert to float32 safely
+        if audio.dtype == np.float32:
+            audio_float = audio.copy()
+        else:
+            audio_float = audio.astype(np.float32) / 32768.0
+
+        # Apply microphone gain
+        if config.MIC_GAIN != 1.0:
+            audio_float = audio_float * config.MIC_GAIN
+
+        # 2. Downmix to mono if needed
+        if audio_float.ndim > 1:
+            audio_float = np.mean(audio_float, axis=1)
+
+        # 3. Resample to 16000 Hz if needed (Silero requires 16k)
+        target_sr = 16000
+        if sr != target_sr:
+            num_samples = int(len(audio_float) * target_sr / sr)
+            audio_float = resample(audio_float, num_samples)
+
+        # Log RMS level periodically (every 500 frames ~= 25s)
+        if self._receive_frame_count % 500 == 0:
+            rms = float(np.sqrt(np.mean(audio_float**2)))
+            peak = float(np.abs(audio_float).max())
+            logger.info(
+                f"Audio level (frame {self._receive_frame_count}): "
+                f"rms={rms:.6f}, peak={peak:.6f}, samples={len(audio_float)}"
+            )
+
+        # 4. Add to VAD buffer
+        self.vad_buffer = np.concatenate((self.vad_buffer, audio_float))
+
+        # 4.5 Add to Classifier Buffer
+        if self.classifier:
+            self.classifier_buffer = np.concatenate((self.classifier_buffer, audio_float))
+            # Process every ~1 second (16000 samples)
+            if len(self.classifier_buffer) >= 16000:
+                chunk_to_classify = self.classifier_buffer[:16000]
+                self.classifier_buffer = self.classifier_buffer[16000:]  # Slide window
+
+                # Check for cry (throttled to once every 10s to avoid spam)
+                now = time.time()
+                if now - self.last_cry_time > 10.0:
+                    # Run in thread
+                    results = await asyncio.to_thread(self.classifier.classify, chunk_to_classify)
+                    for label, score in results:
+                        if label in ["Baby cry, infant cry", "Crying, sobbing", "Whimper"] and score > 0.4:
+                            logger.info(f"Audio Event Detected: {label} ({score:.2f})")
+                            self.last_cry_time = now
+
+                            # Update shared status for tools
+                            if self.deps.audio_classifier_status is not None:
+                                self.deps.audio_classifier_status["latest_event"] = label
+                                self.deps.audio_classifier_status["timestamp"] = now
+                                self.deps.audio_classifier_status["score"] = float(score)
+
+                            # Inject event into LLM context (triggers soothe_baby)
+                            asyncio.create_task(self._process_system_event(f"I hear a {label.lower()} nearby."))
+
+                            # Directly send photo alert — don't rely on LLM for notification
+                            if config.FEATURE_SIGNAL_ALERTS and config.SIGNAL_USER_PHONE:
+                                asyncio.create_task(self._send_cry_photo_alert())
+                            break
+
+        # 5. Echo suppression: skip VAD while pipeline is generating/playing TTS
+        now_mono = time.monotonic()
+        if self._active_pipeline_count > 0 or now_mono < self._suppress_vad_until:
+            # Discard accumulated VAD buffer to avoid processing stale audio
+            self.vad_buffer = np.array([], dtype=np.float32)
+            self.lookback_buffer.clear()
+            if self.is_speaking:
+                self.is_speaking = False
+                self.audio_buffer = []
+                self.speech_chunks = 0
+                self.silence_chunks = 0
+            return
+
+        # 6. Process VAD in 512-sample chunks (32ms at 16k)
+        chunk_size = 512
+
+        while len(self.vad_buffer) >= chunk_size:
+            chunk = self.vad_buffer[:chunk_size]
+            self.vad_buffer = self.vad_buffer[chunk_size:]
+
+            # VAD Check
+            if self.vad:
+                is_speech = self.vad.is_speech(chunk)
+            else:
+                is_speech = False
+
+            if is_speech:
+                if not self.is_speaking:
+                    # Speech started
+                    self.is_speaking = True
+                    self.speech_chunks = 0
+                    logger.info("Speech detected!")
+
+                    # Prepend lookback buffer to start of speech
+                    self.audio_buffer = list(self.lookback_buffer)
+                    self.lookback_buffer.clear()
+
+                    if self.deps.head_wobbler:
+                        self.deps.movement_manager.set_listening(True)
+
+                self.silence_chunks = 0
+                self.speech_chunks += 1
+                self.audio_buffer.append(chunk)
+
+            else:
+                if self.is_speaking:
+                    # Possibly speech ended, but wait for silence threshold
+                    self.silence_chunks += 1
+                    self.audio_buffer.append(chunk)
+
+                    # Silence threshold: 1.5s ~ 47 chunks (47 * 32ms = 1504ms)
+                    if self.silence_chunks > 47:
+                        self.is_speaking = False
+                        logger.info(f"Speech finished ({self.speech_chunks} chunks)")
+                        self.deps.movement_manager.set_listening(False)
+
+                        # Trigger pipeline if we had enough speech
+                        if self.speech_chunks > 5:  # Lowered from 10 to catch short commands
+                            full_audio = np.concatenate(self.audio_buffer)
+                            logger.info("Triggering AI pipeline...")
+                            asyncio.create_task(self._run_pipeline(full_audio))
+                        else:
+                            logger.debug("Speech too short, ignoring.")
+
+                        self.audio_buffer = []
+                        self.speech_chunks = 0
+                else:
+                    # Not speaking, keep filling lookback buffer
+                    self.lookback_buffer.append(chunk)
+
+    async def _process_system_event(self, event_text: str):
+        """Process a system event (like 'Baby cry detected') as if it were a user prompt."""
+        if self.llm is None:
+            return
+        logger.info(f"System Event: {event_text}")
+        await self.output_queue.put(AdditionalOutputs({"role": "system", "content": event_text}))
+
+        # Suppress VAD while we generate and play TTS (echo prevention)
+        self._active_pipeline_count += 1
+        try:
+            # 2. LLM Loop
+            current_input = f"[System Notification: {event_text}]"
+
+            # Reuse the logic from _run_pipeline essentially, but simplified
+            max_turns = 5
+            turn = 0
+            tool_outputs = None
+
+            while turn < max_turns:
+                turn += 1
+                full_response_text = ""
+                current_sentence = ""
+
+                llm_user_input = current_input if turn == 1 else None
+
+                logger.info(f"LLM Turn {turn} (Event: {llm_user_input or 'Tool Outputs'})")
+
+                tool_calls = []
+
+                async for event in self.llm.chat_stream(
+                    user_text=llm_user_input, tools=self.tool_specs, tool_outputs=tool_outputs
+                ):
+                    if event["type"] == "text":
+                        token = event["content"]
+                        full_response_text += token
+                        current_sentence += token
+                        if token in [".", "!", "?", "\n"]:
+                            await self._process_sentence(current_sentence)
+                            current_sentence = ""
+                    elif event["type"] == "tool_call":
+                        tool_calls.append(event["tool_call"])
+                    elif event["type"] == "error":
+                        logger.error(f"LLM Error: {event['content']}")
+
+                if current_sentence.strip():
+                    await self._process_sentence(current_sentence)
+
+                if full_response_text:
+                    logger.info(f"Assistant: {full_response_text}")
+                    await self.output_queue.put(
+                        AdditionalOutputs({"role": "assistant", "content": full_response_text})
+                    )
+
+                if not tool_calls:
+                    break
+
+                tool_outputs = []
+                for tc in tool_calls:
+                    func_name = tc["function"]["name"]
+                    args_str = tc["function"]["arguments"]
+                    call_id = tc["id"]
+                    logger.info(f"🛠️ Tool Call: {func_name}({args_str})")
+                    result = await dispatch_tool_call(func_name, args_str, self.deps)
+                    result_str = json.dumps(result)
+                    tool_outputs.append({"role": "tool", "content": result_str, "tool_call_id": call_id})
+                    logger.info(f"   -> Result: {result_str}")
+        finally:
+            self._active_pipeline_count -= 1
+            if self._active_pipeline_count == 0:
+                cooldown_s = 1.5
+                self._suppress_vad_until = max(
+                    self._playback_end_mono + cooldown_s,
+                    time.monotonic() + cooldown_s,
+                )
+                logger.debug("System event done, VAD suppressed until playback ends + cooldown")
+
+    async def _run_pipeline(self, audio: np.ndarray):
+        """Run STT -> LLM -> TTS pipeline."""
+        if self.stt is None or self.llm is None or self.tts is None:
+            return
+
+        # --- Latency tracking ---
+        t_pipeline_start = time.monotonic()
+        t_first_token = 0.0
+        t_first_audio = 0.0
+        t_llm_done = 0.0
+        first_token_logged = False
+        llm_token_count = 0
+
+        # 1. STT
+        transcript = await asyncio.to_thread(self.stt.transcribe, audio)
+        t_stt_done = time.monotonic()
+        if not transcript.strip():
+            return
+
+        stt_ms = (t_stt_done - t_pipeline_start) * 1000
+        logger.info(f"⏱️ STT: {stt_ms:.0f}ms ({len(audio) / 16000:.1f}s audio)")
+
+        # Suppress VAD while we generate and play TTS (echo prevention)
+        self._active_pipeline_count += 1
+        try:
+            # 1.5 Inject Vision Context
+            vision_context = ""
+            if self.deps.vision_manager and self.deps.vision_manager.latest_description:
+                vision_context = f" [Visual Context: {self.deps.vision_manager.latest_description}]"
+
+            logger.info(f"User: {transcript}{vision_context}")
+            await self.output_queue.put(AdditionalOutputs({"role": "user", "content": transcript}))
+
+            # 2. LLM Loop (Handling potential tool calls)
+            current_input = transcript + vision_context
+            max_turns = 5  # Allow multi-step tool chains
+            turn = 0
+
+            tool_outputs = None  # For subsequent turns
+
+            while turn < max_turns:
+                turn += 1
+                full_response_text = ""
+                current_sentence = ""
+
+                # If this is the first turn, we pass user input. Subsequent turns are tool outputs.
+                llm_user_input = current_input if turn == 1 else None
+
+                logger.info(f"LLM Turn {turn} (Input: {llm_user_input or 'Tool Outputs'})")
+
+                tool_calls = []
+
+                async for event in self.llm.chat_stream(
+                    user_text=llm_user_input, tools=self.tool_specs, tool_outputs=tool_outputs
+                ):
+                    if event["type"] == "text":
+                        token = event["content"]
+                        full_response_text += token
+                        current_sentence += token
+                        llm_token_count += 1
+
+                        # Track time-to-first-token (first text turn only)
+                        if not first_token_logged and turn == 1:
+                            t_first_token = time.monotonic()
+                            first_token_logged = True
+                            ttft_ms = (t_first_token - t_stt_done) * 1000
+                            logger.info(f"⏱️ LLM first token: {ttft_ms:.0f}ms")
+
+                        # Simple sentence splitting for TTS streaming
+                        if token in [".", "!", "?", "\n"]:
+                            await self._process_sentence(
+                                current_sentence,
+                                _latency_cb=self._make_first_audio_cb(t_pipeline_start, t_first_audio)
+                                if t_first_audio == 0.0
+                                else None,
+                            )
+                            if t_first_audio == 0.0:
+                                t_first_audio = time.monotonic()
+                            current_sentence = ""
+
+                    elif event["type"] == "tool_call":
+                        tool_calls.append(event["tool_call"])
+
+                    elif event["type"] == "error":
+                        logger.error(f"LLM Error: {event['content']}")
+
+                # Track when LLM finishes generating (first text turn)
+                if turn == 1 and t_llm_done == 0.0:
+                    t_llm_done = time.monotonic()
+                    llm_gen_ms = (t_llm_done - t_stt_done) * 1000
+                    tok_s = llm_token_count / ((t_llm_done - t_stt_done) or 1)
+                    logger.info(f"⏱️ LLM done: {llm_gen_ms:.0f}ms ({llm_token_count} tokens, {tok_s:.1f} tok/s)")
+
+                # Process remaining text
+                if current_sentence.strip():
+                    await self._process_sentence(current_sentence)
+
+                if full_response_text:
+                    logger.info(f"Assistant: {full_response_text}")
+                    await self.output_queue.put(
+                        AdditionalOutputs({"role": "assistant", "content": full_response_text})
+                    )
+
+                # If no tool calls, we are done
+                if not tool_calls:
+                    break
+
+                # Execute Tools
+                tool_outputs = []
+                for tc in tool_calls:
+                    func_name = tc["function"]["name"]
+                    args_str = tc["function"]["arguments"]
+                    call_id = tc["id"]
+
+                    logger.info(f"🛠️ Tool Call: {func_name}({args_str})")
+
+                    # Execute
+                    result = await dispatch_tool_call(func_name, args_str, self.deps)
+                    result_str = json.dumps(result)
+
+                    tool_outputs.append({"role": "tool", "content": result_str, "tool_call_id": call_id})
+
+                    logger.info(f"   -> Result: {result_str}")
+
+                # Prepare for next turn
+                # We Loop back with tool_outputs, llm_user_input will be None
+
+            # --- Log total pipeline latency ---
+            t_pipeline_end = time.monotonic()
+            total_ms = (t_pipeline_end - t_pipeline_start) * 1000
+            ttft_ms = (t_first_token - t_stt_done) * 1000 if t_first_token else 0
+            llm_ms = (t_llm_done - t_stt_done) * 1000 if t_llm_done else 0
+            first_audio_ms = (t_first_audio - t_pipeline_start) * 1000 if t_first_audio else 0
+            tok_s = llm_token_count / ((t_llm_done - t_stt_done) or 1) if t_llm_done else 0
+            logger.info(
+                f"⏱️ BENCHMARK | STT {stt_ms:.0f}ms | TTFT {ttft_ms:.0f}ms | "
+                f"LLM {llm_ms:.0f}ms ({llm_token_count}tok, {tok_s:.1f}tok/s) | "
+                f"First audio {first_audio_ms:.0f}ms | Total {total_ms:.0f}ms"
+            )
+        finally:
+            self._active_pipeline_count -= 1
+            if self._active_pipeline_count == 0:
+                # Cooldown: wait for TTS audio to finish playing through speaker + echo to die
+                cooldown_s = 1.5
+                self._suppress_vad_until = max(
+                    self._playback_end_mono + cooldown_s,
+                    time.monotonic() + cooldown_s,
+                )
+                logger.debug("Pipeline done, VAD suppressed until playback ends + cooldown")
+
+    @staticmethod
+    def _make_first_audio_cb(t_pipeline_start: float, t_first_audio: float):
+        """Create a callback that logs time-to-first-audio once."""
+        logged = False
+
+        def cb():
+            nonlocal logged
+            if not logged and t_first_audio == 0.0:
+                logged = True
+                elapsed_ms = (time.monotonic() - t_pipeline_start) * 1000
+                logger.info(f"⏱️ First audio queued: {elapsed_ms:.0f}ms (speech-in → audio-out)")
+
+        return cb
+
+    async def _process_sentence(self, text: str, _latency_cb=None):
+        """Synthesize and queue audio for a sentence, handling tone and embedded commands."""
+        if self.tts is None:
+            return
+        # --- 1. Extract and Execute Commands (Fallback / Legacy) ---
+        # Look for PLAY_EMOTION("emotion_name") - Kept for backward compatibility or if LLM hallucinates text
+        emotion_matches = re.findall(r'play_emotion\s*\(\s*["\']([^"\']+)["\']\s*\)', text, re.IGNORECASE)
+        for emotion in emotion_matches:
+            logger.info(f"⚡️ Executing implied command (Legacy): play_emotion('{emotion}')")
+            asyncio.create_task(dispatch_tool_call("play_emotion", f'{{"emotion_name": "{emotion}"}}', self.deps))
+
+        # --- 2. Clean Text for TTS ---
+        # Remove the command strings we just found (more robust regex)
+        text = re.sub(r"\(?play_emotion\s*\([^)]+\)\)?", "", text, flags=re.IGNORECASE)
+
+        # Remove bold/italic markdown (*word*, **word**)
+        text = text.replace("**", "").replace("*", "")
+
+        # Remove action descriptions in parentheses or asterisks if they remain
+        # e.g. (waves hands) or *laughs*
+        text = re.sub(r"\s*\([^)]*\)", "", text)
+
+        # Remove emojis (Broad unicode range for common emojis)
+        text = re.sub(r"[\U00010000-\U0010ffff]", "", text)
+
+        # Remove other common artifacts if any
+        text = text.strip()
+
+        if not text:
+            return
+
+        # Simple Tone Analysis
+        speed = 1.0
+        voice = "af_sarah"  # Default cheerful
+
+        if "[HAPPY]" in text:
+            text = text.replace("[HAPPY]", "")
+            speed = 1.1
+
+        if "[STORY]" in text:
+            text = text.replace("[STORY]", "")
+            speed = 0.9
+
+        # Synthesize
+        t_tts_start = time.monotonic()
+        sr, audio = await self.tts.synthesize(text, voice=voice, speed=speed)
+        tts_ms = (time.monotonic() - t_tts_start) * 1000
+        logger.info(f"⏱️ TTS: {tts_ms:.0f}ms ({len(text)} chars)")
+
+        # Convert back to int16 for output
+        audio_int16 = (audio * 32767).astype(np.int16)
+
+        # Send to speaker
+        await self.output_queue.put((24000, audio_int16.reshape(1, -1)))
+
+        # Fire latency callback (first audio queued)
+        if _latency_cb is not None:
+            _latency_cb()
+
+        # Track estimated playback end for echo suppression
+        audio_duration_s = len(audio_int16) / 24000.0
+        now_mono = time.monotonic()
+        self._playback_end_mono = max(self._playback_end_mono, now_mono) + audio_duration_s
+
+        # Feed head wobbler
+        if self.deps.head_wobbler:
+            import base64
+
+            b64_data = base64.b64encode(audio_int16.tobytes()).decode("utf-8")
+            self.deps.head_wobbler.feed(b64_data)
+
+    async def _send_cry_photo_alert(self):
+        """Directly send a photo alert via Signal when baby crying is detected.
+
+        Bypasses the LLM to guarantee notification delivery — SLMs can't
+        reliably chain multiple tool calls.
+        """
+        try:
+            import cv2
+
+            from reachy_mini_conversation_app.tools.send_signal import get_signal_interface
+
+            signal = get_signal_interface()
+            if not signal.available:
+                logger.warning("Signal not available for cry photo alert")
+                return
+            if not config.SIGNAL_USER_PHONE:
+                logger.warning("SIGNAL_USER_PHONE not configured for cry alert")
+                return
+
+            if self.deps.camera_worker is None:
+                # No camera — fall back to text-only alert
+                await signal.send_message("Baby is crying!", config.SIGNAL_USER_PHONE)
+                logger.info(f"Cry text alert sent to {config.SIGNAL_USER_PHONE} (no camera)")
+                return
+
+            frame = self.deps.camera_worker.get_latest_frame()
+            if frame is None:
+                await signal.send_message("Baby is crying!", config.SIGNAL_USER_PHONE)
+                logger.info(f"Cry text alert sent to {config.SIGNAL_USER_PHONE} (no frame)")
+                return
+
+            temp_file = None
+            try:
+                with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
+                    temp_file = f.name
+                    success, buffer = cv2.imencode(".jpg", frame)
+                    if not success:
+                        logger.error("Failed to encode cry alert image")
+                        return
+                    f.write(buffer.tobytes())
+
+                ok = await signal.send_message("Baby is crying!", config.SIGNAL_USER_PHONE, attachment=temp_file)
+                if ok:
+                    logger.info(f"Cry photo alert sent to {config.SIGNAL_USER_PHONE}")
+                else:
+                    logger.error("Failed to send cry photo alert via Signal")
+            finally:
+                if temp_file and os.path.exists(temp_file):
+                    try:
+                        os.unlink(temp_file)
+                    except Exception:
+                        pass
+        except Exception as e:
+            logger.error(f"Cry photo alert error: {e}")
+
+    async def _send_danger_photo_alert(self, labels: str):
+        """Directly send a photo alert via Signal when danger is detected."""
+        try:
+            import cv2
+
+            from reachy_mini_conversation_app.tools.send_signal import get_signal_interface
+
+            signal = get_signal_interface()
+            if not signal.available:
+                logger.warning("Signal not available for danger photo alert")
+                return
+            if not config.SIGNAL_USER_PHONE:
+                logger.warning("SIGNAL_USER_PHONE not configured for danger alert")
+                return
+
+            if self.deps.camera_worker is None:
+                await signal.send_message(f"Danger detected near baby: {labels}", config.SIGNAL_USER_PHONE)
+                logger.info(f"Danger text alert sent to {config.SIGNAL_USER_PHONE}")
+                return
+
+            frame = self.deps.camera_worker.get_latest_frame()
+            if frame is None:
+                await signal.send_message(f"Danger detected near baby: {labels}", config.SIGNAL_USER_PHONE)
+                logger.info(f"Danger text alert sent to {config.SIGNAL_USER_PHONE} (no frame)")
+                return
+
+            temp_file = None
+            try:
+                with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
+                    temp_file = f.name
+                    success, buffer = cv2.imencode(".jpg", frame)
+                    if not success:
+                        logger.error("Failed to encode danger alert image")
+                        return
+                    f.write(buffer.tobytes())
+
+                ok = await signal.send_message(
+                    f"Danger detected near baby: {labels}",
+                    config.SIGNAL_USER_PHONE,
+                    attachment=temp_file,
+                )
+                if ok:
+                    logger.info(f"Danger photo alert sent to {config.SIGNAL_USER_PHONE}")
+                else:
+                    logger.error("Failed to send danger photo alert via Signal")
+            finally:
+                if temp_file and os.path.exists(temp_file):
+                    try:
+                        os.unlink(temp_file)
+                    except Exception:
+                        pass
+        except Exception as e:
+            logger.error(f"Danger photo alert error: {e}")
+
+    async def _poll_danger_detection(self):
+        """Background task: run YOLO on camera frames to detect dangerous objects."""
+        if self.danger_detector is None or self.deps.camera_worker is None:
+            return
+        logger.info("Starting Danger Detection Poller...")
+        poll_count = 0
+        while True:
+            try:
+                frame = self.deps.camera_worker.get_latest_frame()
+                poll_count += 1
+
+                if frame is None:
+                    if poll_count % 15 == 0:  # Log every ~30s
+                        logger.debug("Danger poller: no camera frame available")
+                    await asyncio.sleep(2.0)
+                    continue
+
+                detections = await asyncio.to_thread(self.danger_detector.detect_confirmed, frame)
+
+                if poll_count % 15 == 0:  # Log every ~30s to confirm poller is alive
+                    logger.debug(f"Danger poller: {poll_count} frames scanned, frame shape={frame.shape}")
+
+                if detections:
+                    now = time.time()
+                    # Throttle: one alert per 30 seconds
+                    if now - self.last_danger_time > 30.0:
+                        self.last_danger_time = now
+
+                        # Update shared status for tools
+                        if self.deps.vision_threat_status is not None:
+                            self.deps.vision_threat_status["latest_threat"] = detections[0]["label"]
+                            self.deps.vision_threat_status["timestamp"] = now
+                            self.deps.vision_threat_status["objects"] = detections
+
+                        labels = ", ".join(d["label"] for d in detections)
+                        logger.info(f"Danger Detected: {labels}")
+
+                        # Directly send photo alert — don't rely on LLM for notification
+                        if config.FEATURE_SIGNAL_ALERTS and config.SIGNAL_USER_PHONE:
+                            asyncio.create_task(self._send_danger_photo_alert(labels))
+
+                        # Inject system event — LLM can speak a warning
+                        asyncio.create_task(
+                            self._process_system_event(
+                                f"I see a potentially dangerous object near the baby: {labels}. "
+                                "The parent has been alerted. Speak a brief safety warning."
+                            )
+                        )
+
+                await asyncio.sleep(2.0)  # Check every 2 seconds
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"Danger detection error: {e}")
+                await asyncio.sleep(5.0)
+
+    async def _poll_signal(self):
+        """Background task to poll Signal messages."""
+        if self.signal is None:
+            return
+        logger.info("Starting Signal Poller...")
+        while True:
+            try:
+                messages = await self.signal.poll_messages()
+                for msg in messages:
+                    sender = msg["sender"]
+                    text = msg["content"]
+                    logger.info(f"Signal received from {sender}: {text}")
+
+                    # Process through LLM and respond via Signal
+                    await self._handle_signal_message(sender, text)
+
+                await asyncio.sleep(2.0)
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"Signal polling error: {e}")
+                await asyncio.sleep(5.0)
+
+    async def _handle_signal_message(self, sender: str, text: str):
+        """Process a Signal message and respond, supporting tool use."""
+        if self.llm is None:
+            return
+        await self.output_queue.put(AdditionalOutputs({"role": "user", "content": f"[Signal] {text}"}))
+
+        current_input = text
+        max_turns = 3
+        turn = 0
+        tool_outputs = None
+
+        while turn < max_turns:
+            turn += 1
+            full_response_text = ""
+
+            # First turn uses user text, subsequent turns use None (and rely on tool_outputs)
+            llm_user_input = current_input if turn == 1 else None
+
+            tool_calls = []
+
+            async for event in self.llm.chat_stream(
+                user_text=llm_user_input, tools=self.tool_specs, tool_outputs=tool_outputs
+            ):
+                if event["type"] == "text":
+                    full_response_text += event["content"]
+                elif event["type"] == "tool_call":
+                    tool_calls.append(event["tool_call"])
+                elif event["type"] == "error":
+                    logger.error(f"LLM Error: {event['content']}")
+
+            # If we have text response, log it (we'll send it at end of turn or if final)
+            if full_response_text.strip():
+                # If there are tool calls, this might be a "thought" or preamble.
+                # If no tool calls, it's the final answer.
+                pass
+
+            # If no tool calls, we are done with this chain
+            if not tool_calls:
+                if full_response_text.strip():
+                    logger.info(f"Signal Response: {full_response_text}")
+                    await self.output_queue.put(
+                        AdditionalOutputs({"role": "assistant", "content": f"[Signal] {full_response_text}"})
+                    )
+
+                    target = sender if sender else self.user_phone
+                    if target and self.signal:
+                        await self.signal.send_message(full_response_text, target)
+                break
+
+            # Execute Tools
+            tool_outputs = []
+            for tc in tool_calls:
+                func_name = tc["function"]["name"]
+                args_str = tc["function"]["arguments"]
+                call_id = tc["id"]
+
+                logger.info(f"🛠️ Signal Tool Call: {func_name}({args_str})")
+
+                # Execute
+                result = await dispatch_tool_call(func_name, args_str, self.deps)
+                result_str = json.dumps(result)
+
+                tool_outputs.append({"role": "tool", "content": result_str, "tool_call_id": call_id})
+
+                logger.info(f"   -> Result: {result_str}")
+
+            # Loop continues to next turn to let LLM react to tool outputs
+
+    async def emit(self):
+        """Return the next output from the handler queue."""
+        return await wait_for_item(self.output_queue)
+
+    async def shutdown(self):
+        """Shutdown the handler and cancel background tasks."""
+        if self.danger_detection_task:
+            self.danger_detection_task.cancel()
+            self.danger_detection_task = None
+        if self.signal_polling_task:
+            self.signal_polling_task.cancel()
+            self.signal_polling_task = None
+        # Clear conversation history so a restart gets a fresh session
+        if self.llm is not None:
+            self.llm.history = []

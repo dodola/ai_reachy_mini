@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Reachy Mini 3D Viewer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            background: linear-gradient(180deg, #00bfae 0%, #0093d1 60%, #3f51b5 100%);
+        }
+
+        #container { width: 100vw; height: 100vh; }
+
+        #panel {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: calc(100vh - 32px);
+        }
+
+        .card {
+            background: rgba(20, 20, 35, 0.75);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px;
+            width: 220px;
+        }
+
+        .card h3 {
+            font-size: 10px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 8px;
+        }
+
+        #status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #fff;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #666;
+            flex-shrink: 0;
+        }
+        .status-dot.connected { background: #4ade80; box-shadow: 0 0 6px rgba(74, 222, 128, 0.5); }
+        .status-dot.disconnected { background: #f87171; box-shadow: 0 0 6px rgba(248, 113, 113, 0.5); }
+        .status-dot.loading { background: #fbbf24; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        #joints-list { display: flex; flex-direction: column; gap: 4px; }
+
+        .joint-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .joint-label {
+            color: rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .joint-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+        .joint-value {
+            font-family: 'SF Mono', Monaco, monospace;
+            color: #fff;
+            font-size: 11px;
+        }
+
+        #chart-wrapper {
+            height: 80px;
+            position: relative;
+        }
+
+        #chart {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        #controls-hint {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(20, 20, 35, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        #controls-hint kbd {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+
+        #launch-card p {
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+
+        #launch-card code {
+            background: rgba(255,255,255,0.1);
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+
+        #launch-card a {
+            /* display: block;
+            text-align: center;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.10); */
+            color: #fff;
+            text-decoration: none;
+            /* font-size: 11px; */
+        }
+
+        #launch-card a:hover {
+            background: rgba(255,255,255,0.15);
+        }
+    </style>
+</head>
+<body>
+    <div id="panel">
+        <div class="card">
+            <h3>Status</h3>
+            <div id="status">
+                <span class="status-dot loading"></span>
+                <span id="status-text">Connecting to Reachy...</span>
+            </div>
+        </div>
+
+        <div class="card" hidden>
+            <h3>Joints</h3>
+            <div id="joints-list">
+                <div class="joint-row"><span class="joint-label">Waiting...</span></div>
+            </div>
+        </div>
+
+        <div class="card" hidden>
+            <h3>History</h3>
+            <div id="chart-wrapper">
+                <canvas id="chart"></canvas>
+            </div>
+        </div>
+
+        <div id="launch-card" class="card" hidden>
+            <p>Start this app in <a href="https://huggingface.co/spaces/pollen-robotics/Reachy_Mini#download" target="_blank" rel="noopener">Reachy Mini Control</a> then open live visualization at <code>http://localhost:8080</code></p>
+        </div>
+    </div>
+
+    <div id="container"></div>
+
+    <div id="controls-hint">
+        <kbd>Drag</kbd> rotate · <kbd>Scroll</kbd> zoom · <kbd>Shift+Drag</kbd> pan
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <script type="importmap">
+    { "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/",
+        "three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+    }}
+    </script>
+
+<script type="module">
+    import { App } from './src/App.js';
+    window.addEventListener('DOMContentLoaded', () => {
+        new App();
+    });
+</script>
+</body>
+</html>

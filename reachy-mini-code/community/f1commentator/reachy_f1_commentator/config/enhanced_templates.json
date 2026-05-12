@@ -1,0 +1,3197 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Enhanced F1 commentary templates organized by event type, excitement level, and perspective",
+    "total_templates": 210,
+    "event_types": [
+      "overtake",
+      "pit_stop",
+      "fastest_lap",
+      "incident",
+      "lead_change"
+    ],
+    "excitement_levels": [
+      "calm",
+      "moderate",
+      "engaged",
+      "excited",
+      "dramatic"
+    ],
+    "perspectives": [
+      "technical",
+      "strategic",
+      "dramatic",
+      "positional",
+      "historical"
+    ]
+  },
+  "templates": [
+    {
+      "template_id": "overtake_calm_technical_001",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "{driver1} moves past {driver2} into {position}, with a {speed_diff} km/h advantage on the straight.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "speed_diff"
+      ],
+      "context_requirements": {
+        "telemetry_data": false
+      }
+    },
+    {
+      "template_id": "overtake_calm_technical_002",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "{driver1} completes the pass on {driver2} for {position}, using {drs_status} to gain the advantage.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "drs_status"
+      ],
+      "context_requirements": {
+        "telemetry_data": false
+      }
+    },
+    {
+      "template_id": "overtake_calm_technical_003",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "{driver1} takes {position} from {driver2}, carrying more speed through the final sector.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_technical_004",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "Position change as {driver1} gets by {driver2} for {position}, with better traction out of the corner.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_technical_005",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "{driver1} overtakes {driver2} into {position}, showing a {speed_trap} km/h top speed through the speed trap.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "speed_trap"
+      ],
+      "context_requirements": {
+        "telemetry_data": false
+      }
+    },
+    {
+      "template_id": "overtake_calm_technical_006",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "{driver1} moves ahead of {driver2} for {position}, with {drs_status} providing the necessary boost.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "drs_status"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_technical_007",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "{driver1} passes {driver2} to take {position}, executing a clean move on the inside line.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_technical_008",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "{driver1} gets past {driver2} for {position}, with superior straight-line speed.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_technical_009",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "{driver1} overtakes {driver2} into {position}, showing better pace through the middle sector.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_technical_010",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "{driver1} moves into {position}, passing {driver2} with {drs_status} on the main straight.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "drs_status"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_strategic_001",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "strategic",
+      "template_text": "{driver1} passes {driver2} for {position}, taking advantage of {tire_age_diff} lap fresher tires.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "tire_age_diff"
+      ],
+      "context_requirements": {
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "overtake_calm_strategic_002",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "strategic",
+      "template_text": "{driver1} moves ahead of {driver2} into {position}, with the tire advantage paying off.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_strategic_003",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "strategic",
+      "template_text": "{driver1} overtakes {driver2} for {position}, as the undercut strategy comes to fruition.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_strategic_004",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "strategic",
+      "template_text": "{driver1} gets by {driver2} into {position}, benefiting from the earlier pit stop.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_strategic_005",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "strategic",
+      "template_text": "{driver1} takes {position} from {driver2}, with the tire strategy difference showing.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_strategic_006",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "strategic",
+      "template_text": "{driver1} passes {driver2} for {position}, on {tire_compound} tires that are {tire_age_diff} laps newer.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "tire_compound",
+        "tire_age_diff"
+      ],
+      "context_requirements": {
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "overtake_calm_strategic_007",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "strategic",
+      "template_text": "{driver1} moves into {position}, overtaking {driver2} as the tire delta makes the difference.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_strategic_008",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "strategic",
+      "template_text": "{driver1} completes the pass on {driver2} for {position}, with fresher rubber providing the edge.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_strategic_009",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "strategic",
+      "template_text": "{driver1} gets ahead of {driver2} into {position}, the pit strategy paying dividends.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_strategic_010",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "strategic",
+      "template_text": "{driver1} overtakes {driver2} for {position}, with the tire advantage clear to see.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_dramatic_001",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "dramatic",
+      "template_text": "{driver1} makes the move on {driver2}, taking {position} after several laps of pressure.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_dramatic_002",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "dramatic",
+      "template_text": "{driver1} finally gets past {driver2} for {position}, after stalking {pronoun2} for the last few laps.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun2"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_dramatic_003",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "dramatic",
+      "template_text": "{driver1} seizes the opportunity and passes {driver2} for {position}.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_dramatic_004",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "dramatic",
+      "template_text": "{driver1} takes {position} from {driver2}, ending their brief battle.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_dramatic_005",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "dramatic",
+      "template_text": "{driver1} moves ahead of {driver2} into {position}, after a patient approach.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_dramatic_006",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "dramatic",
+      "template_text": "{driver1} gets by {driver2} for {position}, capitalizing on a small mistake.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_dramatic_007",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "dramatic",
+      "template_text": "{driver1} overtakes {driver2} into {position}, showing determination.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_dramatic_008",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "dramatic",
+      "template_text": "{driver1} passes {driver2} to claim {position}, after waiting for the right moment.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_dramatic_009",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "dramatic",
+      "template_text": "{driver1} takes {position} from {driver2}, with a well-executed move.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_dramatic_010",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "dramatic",
+      "template_text": "{driver1} gets ahead of {driver2} for {position}, after applying consistent pressure.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_positional_001",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "positional",
+      "template_text": "{driver1} moves into {position}, passing {driver2} and gaining ground in the {championship_context}.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "championship_context"
+      ],
+      "context_requirements": {
+        "championship_data": false
+      }
+    },
+    {
+      "template_id": "overtake_calm_positional_002",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "positional",
+      "template_text": "{driver1} overtakes {driver2} for {position}, an important move for {championship_position} in the standings.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "championship_position"
+      ],
+      "context_requirements": {
+        "championship_data": false
+      }
+    },
+    {
+      "template_id": "overtake_calm_positional_003",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "positional",
+      "template_text": "{driver1} gets by {driver2} into {position}, now {gap_to_leader} behind the leader.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "gap_to_leader"
+      ],
+      "context_requirements": {
+        "gap_data": false
+      }
+    },
+    {
+      "template_id": "overtake_calm_positional_004",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "positional",
+      "template_text": "{driver1} passes {driver2} to take {position}, moving up the order.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_positional_005",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "positional",
+      "template_text": "{driver1} takes {position} from {driver2}, improving {pronoun} race position.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_positional_006",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "positional",
+      "template_text": "{driver1} moves ahead of {driver2} for {position}, climbing through the field.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_positional_007",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "positional",
+      "template_text": "{driver1} overtakes {driver2} into {position}, another position gained.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_positional_008",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "positional",
+      "template_text": "{driver1} gets past {driver2} for {position}, continuing {pronoun} progress.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_positional_009",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "positional",
+      "template_text": "{driver1} passes {driver2} to claim {position}, now running in the top ten.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_positional_010",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "positional",
+      "template_text": "{driver1} takes {position} from {driver2}, moving closer to the points.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_historical_001",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "historical",
+      "template_text": "{driver1} passes {driver2} for {position}, {pronoun} {overtake_count} overtake of the day.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun",
+        "overtake_count"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_historical_002",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "historical",
+      "template_text": "{driver1} moves past {driver2} into {position}, continuing {pronoun} strong race.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_historical_003",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "historical",
+      "template_text": "{driver1} overtakes {driver2} for {position}, back where {pronoun} started the race.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_historical_004",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "historical",
+      "template_text": "{driver1} gets by {driver2} into {position}, recovering from the earlier setback.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_historical_005",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "historical",
+      "template_text": "{driver1} takes {position} from {driver2}, {pronoun} first overtake of the session.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_historical_006",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "historical",
+      "template_text": "{driver1} passes {driver2} to claim {position}, matching {pronoun} best position of the day.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_historical_007",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "historical",
+      "template_text": "{driver1} moves ahead of {driver2} for {position}, returning to the top ten.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_historical_008",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "historical",
+      "template_text": "{driver1} overtakes {driver2} into {position}, regaining the place {pronoun} lost earlier.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_historical_009",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "historical",
+      "template_text": "{driver1} gets past {driver2} for {position}, back in contention.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_calm_historical_010",
+      "event_type": "overtake",
+      "excitement_level": "calm",
+      "perspective": "historical",
+      "template_text": "{driver1} takes {position} from {driver2}, continuing the comeback drive.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_technical_001",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "technical",
+      "template_text": "{driver1} makes a good move on {driver2} for {position}, with {drs_status} and a {speed_diff} km/h advantage.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "drs_status",
+        "speed_diff"
+      ],
+      "context_requirements": {
+        "telemetry_data": false
+      }
+    },
+    {
+      "template_id": "overtake_moderate_technical_002",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "technical",
+      "template_text": "{driver1} gets alongside {driver2} and completes the pass for {position}, showing better speed through the speed trap.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_technical_003",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "technical",
+      "template_text": "{driver1} overtakes {driver2} into {position}, using {drs_status} to perfection on the main straight.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "drs_status"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_technical_004",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "technical",
+      "template_text": "{driver1} passes {driver2} for {position}, with superior traction out of the final corner.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_technical_005",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "technical",
+      "template_text": "{driver1} moves past {driver2} into {position}, carrying {speed_trap} km/h through the speed trap.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "speed_trap"
+      ],
+      "context_requirements": {
+        "telemetry_data": false
+      }
+    },
+    {
+      "template_id": "overtake_moderate_technical_006",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "technical",
+      "template_text": "{driver1} completes the overtake on {driver2} for {position}, with {drs_status} giving the edge.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "drs_status"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_technical_007",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "technical",
+      "template_text": "{driver1} gets by {driver2} into {position}, showing better pace through the technical section.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_technical_008",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "technical",
+      "template_text": "{driver1} overtakes {driver2} for {position}, with a significant speed advantage down the straight.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_technical_009",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "technical",
+      "template_text": "{driver1} passes {driver2} to take {position}, executing a textbook overtake with {drs_status}.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "drs_status"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_technical_010",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "technical",
+      "template_text": "{driver1} moves into {position}, getting past {driver2} with better straight-line performance.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_excited_dramatic_001",
+      "event_type": "overtake",
+      "excitement_level": "excited",
+      "perspective": "dramatic",
+      "template_text": "[excited] {driver1} makes the move! {pronoun} gets past {driver2} for {position}, and that's a crucial overtake!",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_excited_dramatic_002",
+      "event_type": "overtake",
+      "excitement_level": "excited",
+      "perspective": "dramatic",
+      "template_text": "[excited] What a move by {driver1}! {pronoun} sweeps around {driver2} to take {position}!",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_excited_dramatic_003",
+      "event_type": "overtake",
+      "excitement_level": "excited",
+      "perspective": "dramatic",
+      "template_text": "[excited] {driver1} goes for it! {pronoun} overtakes {driver2} for {position} with a brilliant maneuver!",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_excited_dramatic_004",
+      "event_type": "overtake",
+      "excitement_level": "excited",
+      "perspective": "dramatic",
+      "template_text": "[excited] Fantastic overtake! {driver1} gets by {driver2} to claim {position}!",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_excited_dramatic_005",
+      "event_type": "overtake",
+      "excitement_level": "excited",
+      "perspective": "dramatic",
+      "template_text": "[excited] {driver1} makes it stick! {pronoun} passes {driver2} for {position} after an intense battle!",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_excited_dramatic_006",
+      "event_type": "overtake",
+      "excitement_level": "excited",
+      "perspective": "dramatic",
+      "template_text": "[excited] Brilliant move! {driver1} overtakes {driver2} into {position}, and {driver2} has no answer!",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_excited_dramatic_007",
+      "event_type": "overtake",
+      "excitement_level": "excited",
+      "perspective": "dramatic",
+      "template_text": "[excited] {driver1} seizes the moment! {pronoun} gets past {driver2} for {position} with a daring move!",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_excited_dramatic_008",
+      "event_type": "overtake",
+      "excitement_level": "excited",
+      "perspective": "dramatic",
+      "template_text": "[excited] Superb overtake by {driver1}! {pronoun} takes {position} from {driver2} with authority!",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_excited_dramatic_009",
+      "event_type": "overtake",
+      "excitement_level": "excited",
+      "perspective": "dramatic",
+      "template_text": "[excited] {driver1} makes the breakthrough! {pronoun} finally gets by {driver2} for {position}!",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_excited_dramatic_010",
+      "event_type": "overtake",
+      "excitement_level": "excited",
+      "perspective": "dramatic",
+      "template_text": "[excited] Excellent move! {driver1} overtakes {driver2} to take {position}, and that's a big moment!",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_dramatic_dramatic_001",
+      "event_type": "overtake",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[excited] {driver1} MAKES THE MOVE! {pronoun} OVERTAKES {driver2} FOR {position}! WHAT A MOMENT!",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_dramatic_dramatic_002",
+      "event_type": "overtake",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[excited] INCREDIBLE! {driver1} GETS PAST {driver2} TO TAKE {position}! THIS IS MASSIVE!",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_dramatic_dramatic_003",
+      "event_type": "overtake",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[excited] {driver1} GOES FOR IT AND MAKES IT STICK! {pronoun} TAKES {position} FROM {driver2}!",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_dramatic_dramatic_004",
+      "event_type": "overtake",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[excited] SENSATIONAL OVERTAKE! {driver1} SWEEPS AROUND {driver2} FOR {position}!",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_dramatic_dramatic_005",
+      "event_type": "overtake",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[excited] {driver1} MAKES THE BREAKTHROUGH! {pronoun} FINALLY GETS BY {driver2} FOR {position}!",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_dramatic_dramatic_006",
+      "event_type": "overtake",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[excited] WHAT A MOVE! {driver1} OVERTAKES {driver2} TO CLAIM {position}! ABSOLUTELY BRILLIANT!",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_dramatic_dramatic_007",
+      "event_type": "overtake",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[excited] {driver1} SEIZES THE OPPORTUNITY! {pronoun} PASSES {driver2} FOR {position}! INCREDIBLE RACING!",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_dramatic_dramatic_008",
+      "event_type": "overtake",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[excited] FANTASTIC! {driver1} GETS PAST {driver2} FOR {position}! THIS CHANGES EVERYTHING!",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_dramatic_dramatic_009",
+      "event_type": "overtake",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[excited] {driver1} MAKES IT HAPPEN! {pronoun} OVERTAKES {driver2} INTO {position}! WHAT DRAMA!",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_dramatic_dramatic_010",
+      "event_type": "overtake",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[excited] BRILLIANT MOVE BY {driver1}! {pronoun} TAKES {position} FROM {driver2}! ABSOLUTELY STUNNING!",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_calm_technical_001",
+      "event_type": "pit_stop",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "{driver} comes into the pits from {position}, a {pit_duration} second stop for {tire_compound} tires.",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pit_duration",
+        "tire_compound"
+      ],
+      "context_requirements": {
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "pit_stop_calm_technical_002",
+      "event_type": "pit_stop",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "{driver} pits from {position}, changing from {old_tire_compound} to {tire_compound} tires.",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "old_tire_compound",
+        "tire_compound"
+      ],
+      "context_requirements": {
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "pit_stop_calm_technical_003",
+      "event_type": "pit_stop",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "{driver} makes a pit stop from {position}, those {old_tire_compound} tires were {tire_age} laps old.",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "old_tire_compound",
+        "tire_age"
+      ],
+      "context_requirements": {
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "pit_stop_calm_technical_004",
+      "event_type": "pit_stop",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "Pit stop for {driver} from {position}, a routine stop for fresh {tire_compound} tires.",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "tire_compound"
+      ],
+      "context_requirements": {
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "pit_stop_calm_technical_005",
+      "event_type": "pit_stop",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "{driver} comes in from {position}, a {pit_duration} second service in the pit lane.",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pit_duration"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_calm_technical_006",
+      "event_type": "pit_stop",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "{driver} pits from {position}, switching to {tire_compound} compound tires.",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "tire_compound"
+      ],
+      "context_requirements": {
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "pit_stop_calm_technical_007",
+      "event_type": "pit_stop",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "{driver} makes the pit stop from {position}, the team executing a clean stop.",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_calm_technical_008",
+      "event_type": "pit_stop",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "{driver} comes into the pits from {position}, changing tires after {tire_age} laps.",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "tire_age"
+      ],
+      "context_requirements": {
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "pit_stop_calm_technical_009",
+      "event_type": "pit_stop",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "Pit stop for {driver} from {position}, going from {old_tire_compound} to {tire_compound} tires.",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "old_tire_compound",
+        "tire_compound"
+      ],
+      "context_requirements": {
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "pit_stop_calm_technical_010",
+      "event_type": "pit_stop",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "{driver} pits from {position}, a {pit_duration} second stop for the team.",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pit_duration"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_calm_strategic_001",
+      "event_type": "pit_stop",
+      "excitement_level": "calm",
+      "perspective": "strategic",
+      "template_text": "{driver} pits from {position}, going for the undercut on {rival}.",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "rival"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_calm_strategic_002",
+      "event_type": "pit_stop",
+      "excitement_level": "calm",
+      "perspective": "strategic",
+      "template_text": "{driver} comes in from {position}, an early stop to get ahead of the traffic.",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_calm_strategic_003",
+      "event_type": "pit_stop",
+      "excitement_level": "calm",
+      "perspective": "strategic",
+      "template_text": "{driver} makes the pit stop from {position}, switching to a different tire strategy.",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_calm_strategic_004",
+      "event_type": "pit_stop",
+      "excitement_level": "calm",
+      "perspective": "strategic",
+      "template_text": "Pit stop for {driver} from {position}, trying to extend the first stint.",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_calm_strategic_005",
+      "event_type": "pit_stop",
+      "excitement_level": "calm",
+      "perspective": "strategic",
+      "template_text": "{driver} pits from {position}, the team going for {tire_compound} tires to the end.",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "tire_compound"
+      ],
+      "context_requirements": {
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "pit_stop_calm_strategic_006",
+      "event_type": "pit_stop",
+      "excitement_level": "calm",
+      "perspective": "strategic",
+      "template_text": "{driver} comes in from {position}, reacting to {rival}'s earlier stop.",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "rival"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_calm_strategic_007",
+      "event_type": "pit_stop",
+      "excitement_level": "calm",
+      "perspective": "strategic",
+      "template_text": "{driver} makes the pit stop from {position}, looking to gain track position.",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_calm_strategic_008",
+      "event_type": "pit_stop",
+      "excitement_level": "calm",
+      "perspective": "strategic",
+      "template_text": "{driver} pits from {position}, the team opting for a two-stop strategy.",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_calm_strategic_009",
+      "event_type": "pit_stop",
+      "excitement_level": "calm",
+      "perspective": "strategic",
+      "template_text": "{driver} comes into the pits from {position}, covering off the competition.",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_calm_strategic_010",
+      "event_type": "pit_stop",
+      "excitement_level": "calm",
+      "perspective": "strategic",
+      "template_text": "Pit stop for {driver} from {position}, going aggressive with the tire choice.",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "fastest_lap_calm_technical_001",
+      "event_type": "fastest_lap",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "{driver} sets the fastest lap, a {lap_time}, with purple sectors in one and three.",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_calm_technical_002",
+      "event_type": "fastest_lap",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "Fastest lap for {driver}, a {lap_time}, showing strong pace on {tire_compound} tires.",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time",
+        "tire_compound"
+      ],
+      "context_requirements": {
+        "lap_data": false,
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_calm_technical_003",
+      "event_type": "fastest_lap",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "{driver} goes fastest with a {lap_time}, {speed_trap} km/h through the speed trap.",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time",
+        "speed_trap"
+      ],
+      "context_requirements": {
+        "lap_data": false,
+        "telemetry_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_calm_technical_004",
+      "event_type": "fastest_lap",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "New fastest lap from {driver}, a {lap_time}, improving by {time_delta} seconds.",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time",
+        "time_delta"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_calm_technical_005",
+      "event_type": "fastest_lap",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "{driver} sets the fastest lap, a {lap_time}, with excellent pace through sector two.",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_calm_technical_006",
+      "event_type": "fastest_lap",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "Fastest lap for {driver}, clocking a {lap_time} on {tire_age} lap old {tire_compound} tires.",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time",
+        "tire_age",
+        "tire_compound"
+      ],
+      "context_requirements": {
+        "lap_data": false,
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_calm_technical_007",
+      "event_type": "fastest_lap",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "{driver} goes fastest, a {lap_time}, with a purple final sector.",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_calm_technical_008",
+      "event_type": "fastest_lap",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "New fastest lap from {driver}, a {lap_time}, showing the pace of the car.",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_calm_technical_009",
+      "event_type": "fastest_lap",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "{driver} sets the fastest lap with a {lap_time}, all three sectors in the green.",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_calm_technical_010",
+      "event_type": "fastest_lap",
+      "excitement_level": "calm",
+      "perspective": "technical",
+      "template_text": "Fastest lap for {driver}, a {lap_time}, with strong speed through the technical sections.",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_excited_dramatic_001",
+      "event_type": "fastest_lap",
+      "excitement_level": "excited",
+      "perspective": "dramatic",
+      "template_text": "[excited] Brilliant lap from {driver}! A {lap_time}, and that's the fastest of the race!",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_excited_dramatic_002",
+      "event_type": "fastest_lap",
+      "excitement_level": "excited",
+      "perspective": "dramatic",
+      "template_text": "[excited] {driver} goes purple! A stunning {lap_time} to take the fastest lap!",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_excited_dramatic_003",
+      "event_type": "fastest_lap",
+      "excitement_level": "excited",
+      "perspective": "dramatic",
+      "template_text": "[excited] What a lap by {driver}! {pronoun} sets a {lap_time}, the fastest we've seen today!",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time",
+        "pronoun"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_excited_dramatic_004",
+      "event_type": "fastest_lap",
+      "excitement_level": "excited",
+      "perspective": "dramatic",
+      "template_text": "[excited] Fantastic pace from {driver}! A {lap_time} for the fastest lap!",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_excited_dramatic_005",
+      "event_type": "fastest_lap",
+      "excitement_level": "excited",
+      "perspective": "dramatic",
+      "template_text": "[excited] {driver} delivers! A {lap_time}, and that's a new fastest lap!",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_excited_dramatic_006",
+      "event_type": "fastest_lap",
+      "excitement_level": "excited",
+      "perspective": "dramatic",
+      "template_text": "[excited] Superb lap from {driver}! {pronoun} clocks a {lap_time} for the fastest lap!",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time",
+        "pronoun"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_excited_dramatic_007",
+      "event_type": "fastest_lap",
+      "excitement_level": "excited",
+      "perspective": "dramatic",
+      "template_text": "[excited] {driver} shows the pace! A brilliant {lap_time} to go fastest!",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_excited_dramatic_008",
+      "event_type": "fastest_lap",
+      "excitement_level": "excited",
+      "perspective": "dramatic",
+      "template_text": "[excited] Excellent lap by {driver}! A {lap_time}, and that's the quickest of the day!",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_excited_dramatic_009",
+      "event_type": "fastest_lap",
+      "excitement_level": "excited",
+      "perspective": "dramatic",
+      "template_text": "[excited] {driver} goes fastest! A stunning {lap_time}, purple in all three sectors!",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_excited_dramatic_010",
+      "event_type": "fastest_lap",
+      "excitement_level": "excited",
+      "perspective": "dramatic",
+      "template_text": "[excited] Brilliant from {driver}! {pronoun} sets a {lap_time} for the fastest lap!",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time",
+        "pronoun"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "incident_dramatic_dramatic_001",
+      "event_type": "incident",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[surprised] INCIDENT FOR {driver}! {pronoun} GOES OFF AT TURN {corner}! THIS IS A MAJOR MOMENT!",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "pronoun",
+        "corner"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "incident_dramatic_dramatic_002",
+      "event_type": "incident",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[surprised] CONTACT! {driver1} AND {driver2} MAKE CONTACT! BOTH CARS DAMAGED!",
+      "required_placeholders": [
+        "driver1",
+        "driver2"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "incident_dramatic_dramatic_003",
+      "event_type": "incident",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[surprised] SPIN FOR {driver}! {pronoun} LOSES CONTROL AND GOES OFF! WHAT A DISASTER!",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "incident_dramatic_dramatic_004",
+      "event_type": "incident",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[surprised] CRASH! {driver} HITS THE BARRIER! THE SAFETY CAR IS OUT!",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "incident_dramatic_dramatic_005",
+      "event_type": "incident",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[surprised] COLLISION! {driver1} AND {driver2} COME TOGETHER! THIS IS HUGE!",
+      "required_placeholders": [
+        "driver1",
+        "driver2"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "incident_dramatic_dramatic_006",
+      "event_type": "incident",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[surprised] INCIDENT! {driver} IS IN THE GRAVEL! {pronoun} RACE IS IN JEOPARDY!",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "incident_dramatic_dramatic_007",
+      "event_type": "incident",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[surprised] CONTACT BETWEEN {driver1} AND {driver2}! BOTH CARS AFFECTED! DRAMA!",
+      "required_placeholders": [
+        "driver1",
+        "driver2"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "incident_dramatic_dramatic_008",
+      "event_type": "incident",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[surprised] SPIN! {driver} LOSES IT AT TURN {corner}! {pronoun} DROPS DOWN THE ORDER!",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "pronoun",
+        "corner"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "incident_dramatic_dramatic_009",
+      "event_type": "incident",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[surprised] CRASH FOR {driver}! {pronoun} HITS THE WALL! RED FLAG CONDITIONS!",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "incident_dramatic_dramatic_010",
+      "event_type": "incident",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[surprised] INCIDENT! {driver1} AND {driver2} COLLIDE! THIS CHANGES EVERYTHING!",
+      "required_placeholders": [
+        "driver1",
+        "driver2"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "lead_change_dramatic_dramatic_001",
+      "event_type": "lead_change",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[excited] {driver1} TAKES THE LEAD! {pronoun} OVERTAKES {driver2} FOR P1! WHAT A MOMENT!",
+      "required_placeholders": [
+        "driver1",
+        "driver2"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "lead_change_dramatic_dramatic_002",
+      "event_type": "lead_change",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[excited] WE HAVE A NEW LEADER! {driver1} GETS PAST {driver2} FOR THE LEAD!",
+      "required_placeholders": [
+        "driver1",
+        "driver2"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "lead_change_dramatic_dramatic_003",
+      "event_type": "lead_change",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[excited] {driver1} GOES FOR IT! {pronoun} TAKES THE LEAD FROM {driver2}! INCREDIBLE!",
+      "required_placeholders": [
+        "driver1",
+        "driver2"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "lead_change_dramatic_dramatic_004",
+      "event_type": "lead_change",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[excited] LEAD CHANGE! {driver1} OVERTAKES {driver2} FOR P1! THIS IS MASSIVE!",
+      "required_placeholders": [
+        "driver1",
+        "driver2"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "lead_change_dramatic_dramatic_005",
+      "event_type": "lead_change",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[excited] {driver1} MAKES THE MOVE FOR THE LEAD! {pronoun} GETS PAST {driver2}! SENSATIONAL!",
+      "required_placeholders": [
+        "driver1",
+        "driver2"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "lead_change_dramatic_dramatic_006",
+      "event_type": "lead_change",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[excited] NEW LEADER! {driver1} SWEEPS PAST {driver2} TO TAKE P1! WHAT DRAMA!",
+      "required_placeholders": [
+        "driver1",
+        "driver2"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "lead_change_dramatic_dramatic_007",
+      "event_type": "lead_change",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[excited] {driver1} SEIZES THE LEAD! {pronoun} OVERTAKES {driver2}! ABSOLUTELY BRILLIANT!",
+      "required_placeholders": [
+        "driver1",
+        "driver2"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "lead_change_dramatic_dramatic_008",
+      "event_type": "lead_change",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[excited] LEAD CHANGE! {driver1} GETS BY {driver2} FOR P1! THIS IS HUGE!",
+      "required_placeholders": [
+        "driver1",
+        "driver2"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "lead_change_dramatic_dramatic_009",
+      "event_type": "lead_change",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[excited] {driver1} TAKES P1! {pronoun} OVERTAKES {driver2} FOR THE LEAD! INCREDIBLE RACING!",
+      "required_placeholders": [
+        "driver1",
+        "driver2"
+      ],
+      "optional_placeholders": [
+        "pronoun"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "lead_change_dramatic_dramatic_010",
+      "event_type": "lead_change",
+      "excitement_level": "dramatic",
+      "perspective": "dramatic",
+      "template_text": "[excited] WE HAVE A NEW RACE LEADER! {driver1} PASSES {driver2} FOR P1! WHAT A MOVE!",
+      "required_placeholders": [
+        "driver1",
+        "driver2"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_engaged_technical_001",
+      "event_type": "overtake",
+      "excitement_level": "engaged",
+      "perspective": "technical",
+      "template_text": "[excited] {driver1} makes a strong move on {driver2} for {position}, with {drs_status} and good speed.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "drs_status"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_engaged_technical_002",
+      "event_type": "overtake",
+      "excitement_level": "engaged",
+      "perspective": "technical",
+      "template_text": "[excited] {driver1} gets past {driver2} into {position}, showing better pace on the straights.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_engaged_technical_003",
+      "event_type": "overtake",
+      "excitement_level": "engaged",
+      "perspective": "technical",
+      "template_text": "[excited] {driver1} overtakes {driver2} for {position}, using {drs_status} effectively.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "drs_status"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_engaged_technical_004",
+      "event_type": "overtake",
+      "excitement_level": "engaged",
+      "perspective": "technical",
+      "template_text": "[excited] {driver1} passes {driver2} to take {position}, with superior straight-line speed.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_engaged_technical_005",
+      "event_type": "overtake",
+      "excitement_level": "engaged",
+      "perspective": "technical",
+      "template_text": "[excited] {driver1} moves past {driver2} into {position}, carrying {speed_trap} km/h through the trap.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "speed_trap"
+      ],
+      "context_requirements": {
+        "telemetry_data": false
+      }
+    },
+    {
+      "template_id": "overtake_engaged_technical_006",
+      "event_type": "overtake",
+      "excitement_level": "engaged",
+      "perspective": "technical",
+      "template_text": "[excited] {driver1} completes the overtake on {driver2} for {position}, with {drs_status} helping.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "drs_status"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_engaged_technical_007",
+      "event_type": "overtake",
+      "excitement_level": "engaged",
+      "perspective": "technical",
+      "template_text": "[excited] {driver1} gets by {driver2} into {position}, showing good pace through the lap.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_engaged_technical_008",
+      "event_type": "overtake",
+      "excitement_level": "engaged",
+      "perspective": "technical",
+      "template_text": "[excited] {driver1} overtakes {driver2} for {position}, with a clear speed advantage.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_engaged_technical_009",
+      "event_type": "overtake",
+      "excitement_level": "engaged",
+      "perspective": "technical",
+      "template_text": "[excited] {driver1} passes {driver2} to take {position}, executing a good move with {drs_status}.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "drs_status"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_engaged_technical_010",
+      "event_type": "overtake",
+      "excitement_level": "engaged",
+      "perspective": "technical",
+      "template_text": "[excited] {driver1} moves into {position}, getting past {driver2} with better performance.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_excited_strategic_001",
+      "event_type": "pit_stop",
+      "excitement_level": "excited",
+      "perspective": "strategic",
+      "template_text": "{driver} pits from {position}! Going for the undercut, and this could be crucial!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_excited_strategic_002",
+      "event_type": "pit_stop",
+      "excitement_level": "excited",
+      "perspective": "strategic",
+      "template_text": "{driver} comes in from {position}! An aggressive stop, trying to jump {rival}!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "rival"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_excited_strategic_003",
+      "event_type": "pit_stop",
+      "excitement_level": "excited",
+      "perspective": "strategic",
+      "template_text": "{driver} makes the pit stop from {position}! Bold strategy call from the team!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_excited_strategic_004",
+      "event_type": "pit_stop",
+      "excitement_level": "excited",
+      "perspective": "strategic",
+      "template_text": "Pit stop for {driver} from {position}! This could change the race!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_excited_strategic_005",
+      "event_type": "pit_stop",
+      "excitement_level": "excited",
+      "perspective": "strategic",
+      "template_text": "{driver} pits from {position}! Going for {tire_compound} tires, a different strategy!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "tire_compound"
+      ],
+      "context_requirements": {
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "pit_stop_excited_strategic_006",
+      "event_type": "pit_stop",
+      "excitement_level": "excited",
+      "perspective": "strategic",
+      "template_text": "{driver} comes in from {position}! Reacting to {rival}, and this is tense!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "rival"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_excited_strategic_007",
+      "event_type": "pit_stop",
+      "excitement_level": "excited",
+      "perspective": "strategic",
+      "template_text": "{driver} makes the pit stop from {position}! Trying to gain the advantage!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_excited_strategic_008",
+      "event_type": "pit_stop",
+      "excitement_level": "excited",
+      "perspective": "strategic",
+      "template_text": "{driver} pits from {position}! The team going aggressive with the strategy!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_excited_strategic_009",
+      "event_type": "pit_stop",
+      "excitement_level": "excited",
+      "perspective": "strategic",
+      "template_text": "{driver} comes into the pits from {position}! This could be the winning move!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_excited_strategic_010",
+      "event_type": "pit_stop",
+      "excitement_level": "excited",
+      "perspective": "strategic",
+      "template_text": "Pit stop for {driver} from {position}! Bold call, and it could pay off!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_strategic_001",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "strategic",
+      "template_text": "{driver1} passes {driver2} for {position}, the tire advantage making the difference.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_strategic_002",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "strategic",
+      "template_text": "{driver1} moves ahead of {driver2} into {position}, fresher tires paying off.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_strategic_003",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "strategic",
+      "template_text": "{driver1} overtakes {driver2} for {position}, the undercut working perfectly.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_strategic_004",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "strategic",
+      "template_text": "{driver1} gets by {driver2} into {position}, benefiting from the pit strategy.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_strategic_005",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "strategic",
+      "template_text": "{driver1} takes {position} from {driver2}, with {tire_age_diff} lap newer tires.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "tire_age_diff"
+      ],
+      "context_requirements": {
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "overtake_moderate_strategic_006",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "strategic",
+      "template_text": "{driver1} passes {driver2} for {position}, on {tire_compound} tires with better grip.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "tire_compound"
+      ],
+      "context_requirements": {
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "overtake_moderate_strategic_007",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "strategic",
+      "template_text": "{driver1} moves into {position}, overtaking {driver2} as the strategy plays out.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_strategic_008",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "strategic",
+      "template_text": "{driver1} completes the pass on {driver2} for {position}, fresher rubber helping.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_strategic_009",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "strategic",
+      "template_text": "{driver1} gets ahead of {driver2} into {position}, the pit stop timing perfect.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_strategic_010",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "strategic",
+      "template_text": "{driver1} overtakes {driver2} for {position}, with the tire advantage clear.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_dramatic_001",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "dramatic",
+      "template_text": "{driver1} makes a good move on {driver2}, taking {position} after a few laps of pressure.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_dramatic_002",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "dramatic",
+      "template_text": "{driver1} gets past {driver2} for {position}, after stalking {pronoun2} for several laps.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pronoun2"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_dramatic_003",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "dramatic",
+      "template_text": "{driver1} seizes the opportunity and passes {driver2} for {position}.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_dramatic_004",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "dramatic",
+      "template_text": "{driver1} takes {position} from {driver2}, ending their interesting battle.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_dramatic_005",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "dramatic",
+      "template_text": "{driver1} moves ahead of {driver2} into {position}, after a patient approach.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_dramatic_006",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "dramatic",
+      "template_text": "{driver1} gets by {driver2} for {position}, capitalizing on the moment.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_dramatic_007",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "dramatic",
+      "template_text": "{driver1} overtakes {driver2} into {position}, showing good racecraft.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_dramatic_008",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "dramatic",
+      "template_text": "{driver1} passes {driver2} to claim {position}, after waiting for the opportunity.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_dramatic_009",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "dramatic",
+      "template_text": "{driver1} takes {position} from {driver2}, with a well-timed move.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "overtake_moderate_dramatic_010",
+      "event_type": "overtake",
+      "excitement_level": "moderate",
+      "perspective": "dramatic",
+      "template_text": "{driver1} gets ahead of {driver2} for {position}, after applying pressure.",
+      "required_placeholders": [
+        "driver1",
+        "driver2",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_engaged_technical_001",
+      "event_type": "pit_stop",
+      "excitement_level": "engaged",
+      "perspective": "technical",
+      "template_text": "{driver} comes into the pits from {position}, a quick {pit_duration} second stop!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pit_duration"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_engaged_technical_002",
+      "event_type": "pit_stop",
+      "excitement_level": "engaged",
+      "perspective": "technical",
+      "template_text": "{driver} pits from {position}, changing to {tire_compound} tires in {pit_duration} seconds!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "tire_compound",
+        "pit_duration"
+      ],
+      "context_requirements": {
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "pit_stop_engaged_technical_003",
+      "event_type": "pit_stop",
+      "excitement_level": "engaged",
+      "perspective": "technical",
+      "template_text": "{driver} makes a pit stop from {position}, those {old_tire_compound} tires were {tire_age} laps old!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "old_tire_compound",
+        "tire_age"
+      ],
+      "context_requirements": {
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "pit_stop_engaged_technical_004",
+      "event_type": "pit_stop",
+      "excitement_level": "engaged",
+      "perspective": "technical",
+      "template_text": "Pit stop for {driver} from {position}, a slick {pit_duration} second service!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pit_duration"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_engaged_technical_005",
+      "event_type": "pit_stop",
+      "excitement_level": "engaged",
+      "perspective": "technical",
+      "template_text": "{driver} comes in from {position}, a fast stop for fresh {tire_compound} tires!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "tire_compound"
+      ],
+      "context_requirements": {
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "pit_stop_engaged_technical_006",
+      "event_type": "pit_stop",
+      "excitement_level": "engaged",
+      "perspective": "technical",
+      "template_text": "{driver} pits from {position}, switching to {tire_compound} compound in good time!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "tire_compound"
+      ],
+      "context_requirements": {
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "pit_stop_engaged_technical_007",
+      "event_type": "pit_stop",
+      "excitement_level": "engaged",
+      "perspective": "technical",
+      "template_text": "{driver} makes the pit stop from {position}, the team executing well!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_engaged_technical_008",
+      "event_type": "pit_stop",
+      "excitement_level": "engaged",
+      "perspective": "technical",
+      "template_text": "{driver} comes into the pits from {position}, changing tires after {tire_age} laps!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "tire_age"
+      ],
+      "context_requirements": {
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "pit_stop_engaged_technical_009",
+      "event_type": "pit_stop",
+      "excitement_level": "engaged",
+      "perspective": "technical",
+      "template_text": "Pit stop for {driver} from {position}, going from {old_tire_compound} to {tire_compound}!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "old_tire_compound",
+        "tire_compound"
+      ],
+      "context_requirements": {
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "pit_stop_engaged_technical_010",
+      "event_type": "pit_stop",
+      "excitement_level": "engaged",
+      "perspective": "technical",
+      "template_text": "{driver} pits from {position}, a {pit_duration} second stop, and that's quick!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [
+        "pit_duration"
+      ],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_engaged_dramatic_001",
+      "event_type": "pit_stop",
+      "excitement_level": "engaged",
+      "perspective": "dramatic",
+      "template_text": "{driver} pits from {position}! The team needs a good stop here!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_engaged_dramatic_002",
+      "event_type": "pit_stop",
+      "excitement_level": "engaged",
+      "perspective": "dramatic",
+      "template_text": "{driver} comes in from {position}! This could be crucial for the race!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_engaged_dramatic_003",
+      "event_type": "pit_stop",
+      "excitement_level": "engaged",
+      "perspective": "dramatic",
+      "template_text": "{driver} makes the pit stop from {position}! The pressure is on the crew!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_engaged_dramatic_004",
+      "event_type": "pit_stop",
+      "excitement_level": "engaged",
+      "perspective": "dramatic",
+      "template_text": "Pit stop for {driver} from {position}! They need to nail this!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_engaged_dramatic_005",
+      "event_type": "pit_stop",
+      "excitement_level": "engaged",
+      "perspective": "dramatic",
+      "template_text": "{driver} pits from {position}! A critical moment in the race!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_engaged_dramatic_006",
+      "event_type": "pit_stop",
+      "excitement_level": "engaged",
+      "perspective": "dramatic",
+      "template_text": "{driver} comes into the pits from {position}! The team must deliver!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_engaged_dramatic_007",
+      "event_type": "pit_stop",
+      "excitement_level": "engaged",
+      "perspective": "dramatic",
+      "template_text": "{driver} makes the stop from {position}! This could make or break the race!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_engaged_dramatic_008",
+      "event_type": "pit_stop",
+      "excitement_level": "engaged",
+      "perspective": "dramatic",
+      "template_text": "Pit stop for {driver} from {position}! The crew needs to be quick!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_engaged_dramatic_009",
+      "event_type": "pit_stop",
+      "excitement_level": "engaged",
+      "perspective": "dramatic",
+      "template_text": "{driver} pits from {position}! An important stop at a crucial time!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "pit_stop_engaged_dramatic_010",
+      "event_type": "pit_stop",
+      "excitement_level": "engaged",
+      "perspective": "dramatic",
+      "template_text": "{driver} comes in from {position}! The team has to get this right!",
+      "required_placeholders": [
+        "driver",
+        "position"
+      ],
+      "optional_placeholders": [],
+      "context_requirements": {}
+    },
+    {
+      "template_id": "fastest_lap_moderate_technical_001",
+      "event_type": "fastest_lap",
+      "excitement_level": "moderate",
+      "perspective": "technical",
+      "template_text": "{driver} sets a good lap, a {lap_time}, with strong pace through sector two.",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_moderate_technical_002",
+      "event_type": "fastest_lap",
+      "excitement_level": "moderate",
+      "perspective": "technical",
+      "template_text": "Fastest lap for {driver}, a {lap_time}, showing improved pace on {tire_compound} tires.",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time",
+        "tire_compound"
+      ],
+      "context_requirements": {
+        "lap_data": false,
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_moderate_technical_003",
+      "event_type": "fastest_lap",
+      "excitement_level": "moderate",
+      "perspective": "technical",
+      "template_text": "{driver} goes fastest with a {lap_time}, {speed_trap} km/h through the speed trap.",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time",
+        "speed_trap"
+      ],
+      "context_requirements": {
+        "lap_data": false,
+        "telemetry_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_moderate_technical_004",
+      "event_type": "fastest_lap",
+      "excitement_level": "moderate",
+      "perspective": "technical",
+      "template_text": "New fastest lap from {driver}, a {lap_time}, improving the benchmark.",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_moderate_technical_005",
+      "event_type": "fastest_lap",
+      "excitement_level": "moderate",
+      "perspective": "technical",
+      "template_text": "{driver} sets the fastest lap, a {lap_time}, with good pace through all sectors.",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_moderate_technical_006",
+      "event_type": "fastest_lap",
+      "excitement_level": "moderate",
+      "perspective": "technical",
+      "template_text": "Fastest lap for {driver}, clocking a {lap_time} on {tire_age} lap old tires.",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time",
+        "tire_age"
+      ],
+      "context_requirements": {
+        "lap_data": false,
+        "tire_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_moderate_technical_007",
+      "event_type": "fastest_lap",
+      "excitement_level": "moderate",
+      "perspective": "technical",
+      "template_text": "{driver} goes fastest, a {lap_time}, with a strong final sector.",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_moderate_technical_008",
+      "event_type": "fastest_lap",
+      "excitement_level": "moderate",
+      "perspective": "technical",
+      "template_text": "New fastest lap from {driver}, a {lap_time}, showing the car's potential.",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_moderate_technical_009",
+      "event_type": "fastest_lap",
+      "excitement_level": "moderate",
+      "perspective": "technical",
+      "template_text": "{driver} sets the fastest lap with a {lap_time}, all sectors looking good.",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    },
+    {
+      "template_id": "fastest_lap_moderate_technical_010",
+      "event_type": "fastest_lap",
+      "excitement_level": "moderate",
+      "perspective": "technical",
+      "template_text": "Fastest lap for {driver}, a {lap_time}, with impressive speed.",
+      "required_placeholders": [
+        "driver"
+      ],
+      "optional_placeholders": [
+        "lap_time"
+      ],
+      "context_requirements": {
+        "lap_data": false
+      }
+    }
+  ]
+}

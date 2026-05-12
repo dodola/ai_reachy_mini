@@ -1,0 +1,23 @@
+{
+  "openf1_api_key": "",
+  "openf1_base_url": "https://api.openf1.org/v1",
+  "elevenlabs_api_key": "",
+  "elevenlabs_voice_id": "HSSEHuB5EziJgTfCVmC6",
+  "ai_enabled": false,
+  "ai_provider": "openai",
+  "ai_api_key": null,
+  "ai_model": "gpt-3.5-turbo",
+  "position_poll_interval": 1.0,
+  "laps_poll_interval": 2.0,
+  "pit_poll_interval": 1.0,
+  "race_control_poll_interval": 1.0,
+  "max_queue_size": 10,
+  "audio_volume": 0.8,
+  "movement_speed": 30.0,
+  "enable_movements": true,
+  "log_level": "INFO",
+  "log_file": "logs/f1_commentary.log",
+  "replay_mode": false,
+  "replay_race_id": null,
+  "replay_speed": 1.0
+}

@@ -1,0 +1,17 @@
+# Core dependencies
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+
+# Optional: For full functionality
+# reachy-mini>=0.1.0  # Install separately or via reachy-mini-app-assistant
+# elevenlabs>=1.0.0   # For audio synthesis
+
+# Development dependencies (optional)
+# pytest>=7.4.0
+# pytest-asyncio>=0.21.0
+# hypothesis>=6.88.0
+# black>=23.0.0
+# ruff>=0.1.0

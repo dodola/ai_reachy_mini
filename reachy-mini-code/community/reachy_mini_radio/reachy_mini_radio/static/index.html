@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Webradio Selector</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <div class="app">
+        <div class="top-bar">
+            <div>
+                <h1>Webradio selector</h1>
+                <p class="subtitle">Search stations (Radio Browser) and save the list for your Python app.</p>
+            </div>
+            <div class="badge" id="countBadge">Selected: 0</div>
+        </div>
+
+        <div class="columns">
+            <div class="col">
+                <div class="panel-title">Search</div>
+                <div class="search-row">
+                    <input id="searchInput" type="text" placeholder="e.g. FIP, jazz, rock, BBC…" />
+                    <button id="searchBtn">Search</button>
+                </div>
+                <div class="list-box" id="resultsBox"></div>
+                <div class="status" id="searchStatus"></div>
+            </div>
+
+            <div class="col">
+                <div class="panel-title">Selected stations</div>
+                <div class="list-box" id="selectedBox"></div>
+                <div class="search-row" style="margin-top: 8px;">
+                    <button class="secondary" id="clearBtn">Clear</button>
+                    <button id="saveBtn" style="margin-left: auto;">Save</button>
+                </div>
+                <div class="status" id="saveStatus"></div>
+            </div>
+        </div>
+    </div>
+    <script src="/static/main.js"></script>
+</body>
+
+</html>

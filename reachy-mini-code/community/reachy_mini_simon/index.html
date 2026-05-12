@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simon - Reachy Mini Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Hero Section -->
+        <header class="hero">
+            <div class="hero-content">
+                <h1 class="title">
+                    <span class="emoji">🤖</span>
+                    Simon
+                    <span class="emoji">🎮</span>
+                </h1>
+                <p class="subtitle">A Memory Game for Reachy Mini</p>
+                <p class="tagline">Watch, Remember, Repeat - Three Difficulty Modes!</p>
+            </div>
+        </header>
+
+        <!-- Game Preview -->
+        <section class="preview">
+            <div class="robot-display">
+                <div class="robot-icon">🎯</div>
+                <div class="direction-indicators">
+                    <div class="direction up">
+                        <span class="arrow">↑</span>
+                        <span class="label">UP</span>
+                    </div>
+                    <div class="direction-row">
+                        <div class="direction left">
+                            <span class="arrow">←</span>
+                            <span class="label">LEFT</span>
+                        </div>
+                        <div class="direction right">
+                            <span class="arrow">→</span>
+                            <span class="label">RIGHT</span>
+                        </div>
+                    </div>
+                    <div class="direction down">
+                        <span class="arrow">↓</span>
+                        <span class="label">DOWN</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Difficulty Modes -->
+        <section class="difficulty-modes">
+            <h2>Three Difficulty Modes</h2>
+            <div class="difficulty-grid">
+                <div class="difficulty-card">
+                    <div class="difficulty-badge">1</div>
+                    <h3>Head Only</h3>
+                    <p><strong>4 Directions</strong></p>
+                    <p>Classic Simon - just head tilts (Up, Down, Left, Right)</p>
+                    <div class="difficulty-hint">Left antenna: Straight up (0°)</div>
+                </div>
+                <div class="difficulty-card">
+                    <div class="difficulty-badge">2</div>
+                    <h3>Head + Body</h3>
+                    <p><strong>6 Directions</strong></p>
+                    <p>Head tilts + body yaw rotation (adds Body Left, Body Right)</p>
+                    <div class="difficulty-hint">Left antenna: ~45°</div>
+                </div>
+                <div class="difficulty-card">
+                    <div class="difficulty-badge">3</div>
+                    <h3>Full Robot</h3>
+                    <p><strong>10 Directions!</strong></p>
+                    <p>Head + body + antenna movements (4 antenna directions)</p>
+                    <div class="difficulty-hint">Left antenna: ~90°</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How to Play -->
+        <section class="how-to-play">
+            <h2>How to Play</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Select Difficulty</h3>
+                        <p>Move the LEFT antenna to choose difficulty (1, 2, or 3)</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Start the Game</h3>
+                        <p>Pull the RIGHT antenna to start (it twitches when ready!)</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Watch the Sequence</h3>
+                        <p>Reachy demonstrates with head, body, and/or antennas</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Repeat & Win!</h3>
+                        <p>Repeat the sequence - each round adds one more move!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Controls -->
+        <section class="controls">
+            <h2>Controls by Difficulty</h2>
+
+            <h3 class="control-section-title">🎯 Difficulty 1: Head Movements (4 directions)</h3>
+            <div class="controls-grid">
+                <div class="control-card">
+                    <div class="control-icon">↑</div>
+                    <h3>UP</h3>
+                    <p>Tilt head <strong>forward</strong></p>
+                    <div class="tilt-indicator">12° forward</div>
+                </div>
+                <div class="control-card">
+                    <div class="control-icon">↓</div>
+                    <h3>DOWN</h3>
+                    <p>Tilt head <strong>backward</strong></p>
+                    <div class="tilt-indicator">12° backward</div>
+                </div>
+                <div class="control-card">
+                    <div class="control-icon">←</div>
+                    <h3>LEFT</h3>
+                    <p>Tilt head to the <strong>left</strong></p>
+                    <div class="tilt-indicator">12° left</div>
+                </div>
+                <div class="control-card">
+                    <div class="control-icon">→</div>
+                    <h3>RIGHT</h3>
+                    <p>Tilt head to the <strong>right</strong></p>
+                    <div class="tilt-indicator">12° right</div>
+                </div>
+            </div>
+
+            <h3 class="control-section-title">🎯 Difficulty 2: + Body Yaw (6 directions)</h3>
+            <div class="controls-grid-small">
+                <div class="control-card">
+                    <div class="control-icon">↶</div>
+                    <h3>BODY LEFT</h3>
+                    <p>Rotate body <strong>left</strong></p>
+                    <div class="tilt-indicator">20° left rotation</div>
+                </div>
+                <div class="control-card">
+                    <div class="control-icon">↷</div>
+                    <h3>BODY RIGHT</h3>
+                    <p>Rotate body <strong>right</strong></p>
+                    <div class="tilt-indicator">20° right rotation</div>
+                </div>
+            </div>
+
+            <h3 class="control-section-title">🎯 Difficulty 3: + Antennas (10 directions!)</h3>
+            <div class="controls-grid">
+                <div class="control-card">
+                    <div class="control-icon">📡←</div>
+                    <h3>LEFT ANTENNA LEFT</h3>
+                    <p>Move left antenna <strong>left</strong></p>
+                </div>
+                <div class="control-card">
+                    <div class="control-icon">📡→</div>
+                    <h3>LEFT ANTENNA RIGHT</h3>
+                    <p>Move left antenna <strong>right</strong></p>
+                </div>
+                <div class="control-card">
+                    <div class="control-icon">📡←</div>
+                    <h3>RIGHT ANTENNA LEFT</h3>
+                    <p>Move right antenna <strong>left</strong></p>
+                </div>
+                <div class="control-card">
+                    <div class="control-icon">📡→</div>
+                    <h3>RIGHT ANTENNA RIGHT</h3>
+                    <p>Move right antenna <strong>right</strong></p>
+                </div>
+            </div>
+
+            <div class="control-tip">
+                <strong>💡 Tip:</strong> Hold each position for 0.1 seconds - you'll hear a sound when registered
+            </div>
+        </section>
+
+        <!-- Features -->
+        <section class="features">
+            <h2>Features</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎚️</div>
+                    <h3>3 Difficulty Modes</h3>
+                    <p>From 4 to 10 directions - choose your challenge!</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎵</div>
+                    <h3>Unique Sounds</h3>
+                    <p>Each of the 10 directions has its own musical tone</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏆</div>
+                    <h3>Score Tracking</h3>
+                    <p>Beat your personal best at each difficulty level</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎉</div>
+                    <h3>Celebrations</h3>
+                    <p>Reachy performs a happy dance when you set new records</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Instant Feedback</h3>
+                    <p>Hear sounds immediately - lose on first wrong move!</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>Full Body Control</h3>
+                    <p>Use head, body rotation, and antennas in Difficulty 3</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Built with <span class="heart">❤️</span> for Reachy Mini</p>
+            <p class="tech-stack">Python • Reachy Mini SDK • Simon Classic</p>
+        </footer>
+    </div>
+</body>
+</html>

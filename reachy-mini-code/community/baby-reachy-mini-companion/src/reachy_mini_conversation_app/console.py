@@ -1,0 +1,782 @@
+"""Bidirectional local audio stream with optional settings UI.
+
+In headless mode, there is no Gradio UI. We expose a minimal settings page
+via the Reachy Mini Apps settings server to let non-technical users configure
+the local LLM settings (URL, model, API key, STT model).
+
+The settings UI is served from this package's ``static/`` folder.
+Once set, values are persisted to the app instance's ``.env`` file
+(if available) and used immediately.
+"""
+
+import os
+import sys
+import asyncio
+import logging
+import threading
+from typing import Any, List, Optional
+from pathlib import Path
+
+from fastrtc import AdditionalOutputs, audio_to_float32
+from scipy.signal import resample
+
+from reachy_mini import ReachyMini
+from reachy_mini.media.media_manager import MediaBackend
+from reachy_mini_conversation_app.config import config
+from reachy_mini_conversation_app.headless_personality_ui import mount_personality_routes
+
+
+try:
+    # FastAPI is provided by the Reachy Mini Apps runtime
+    from fastapi import FastAPI, Request, Response
+    from fastapi.responses import FileResponse, JSONResponse
+    from starlette.staticfiles import StaticFiles
+except Exception:  # pragma: no cover - only loaded when settings_app is used
+    FastAPI = object  # type: ignore[misc,assignment]
+    Request = object  # type: ignore[misc,assignment]
+    FileResponse = object  # type: ignore[misc,assignment]
+    JSONResponse = object  # type: ignore[misc,assignment]
+    StaticFiles = object  # type: ignore[misc,assignment]
+
+
+logger = logging.getLogger(__name__)
+
+
+class LocalStream:
+    """LocalStream using Reachy Mini's recorder/player."""
+
+    def __init__(
+        self,
+        handler: Any,
+        robot: ReachyMini,
+        *,
+        settings_app: Optional[FastAPI] = None,
+        instance_path: Optional[str] = None,
+    ):
+        """Initialize the stream with a local session handler and pipelines.
+
+        - ``settings_app``: the Reachy Mini Apps FastAPI to attach settings endpoints.
+        - ``instance_path``: directory where per-instance ``.env`` should be stored.
+        """
+        self.handler = handler
+        self._robot = robot
+        self._stop_event = threading.Event()  # thread-safe (set from uvicorn, polled from asyncio)
+        self._tasks: List[asyncio.Task[None]] = []
+        # Allow the handler to flush the player queue when appropriate.
+        self.handler._clear_queue = self.clear_audio_queue
+        self._settings_app: Optional[FastAPI] = settings_app
+        self._instance_path: Optional[str] = instance_path
+        self._settings_initialized = False
+        self._asyncio_loop = None
+        # Gate for local mode: blocks launch() until user clicks "Start" in the UI
+        self._start_event = threading.Event()
+        self._pipeline_state = "configuring"  # "configuring" | "running" | "shutting_down"
+        self._mic_device: Optional[int] = None  # SoundDevice index, None = use SDK media
+
+        # Register dashboard routes immediately so the UI is available
+        # while the robot and pipeline are still initializing.
+        self._init_settings_ui_if_needed()
+
+    # ---- Settings UI (only when API key is missing) ----
+    def _read_env_lines(self, env_path: Path) -> list[str]:
+        """Load env file contents or a template as a list of lines."""
+        inst = env_path.parent
+        try:
+            if env_path.exists():
+                try:
+                    return env_path.read_text(encoding="utf-8").splitlines()
+                except Exception:
+                    return []
+            template_text = None
+            ex = inst / ".env.example"
+            if ex.exists():
+                try:
+                    template_text = ex.read_text(encoding="utf-8")
+                except Exception:
+                    template_text = None
+            if template_text is None:
+                try:
+                    cwd_example = Path.cwd() / ".env.example"
+                    if cwd_example.exists():
+                        template_text = cwd_example.read_text(encoding="utf-8")
+                except Exception:
+                    template_text = None
+            if template_text is None:
+                packaged = Path(__file__).parent / ".env.example"
+                if packaged.exists():
+                    try:
+                        template_text = packaged.read_text(encoding="utf-8")
+                    except Exception:
+                        template_text = None
+            return template_text.splitlines() if template_text else []
+        except Exception:
+            return []
+
+    def _persist_personality(self, profile: Optional[str]) -> None:
+        """Persist the startup personality to the instance .env and config."""
+        selection = (profile or "").strip() or None
+        try:
+            from reachy_mini_conversation_app.config import set_custom_profile
+
+            set_custom_profile(selection)
+        except Exception:
+            pass
+
+        if not self._instance_path:
+            return
+        try:
+            env_path = Path(self._instance_path) / ".env"
+            lines = self._read_env_lines(env_path)
+            replaced = False
+            for i, ln in enumerate(list(lines)):
+                if ln.strip().startswith("REACHY_MINI_CUSTOM_PROFILE="):
+                    if selection:
+                        lines[i] = f"REACHY_MINI_CUSTOM_PROFILE={selection}"
+                    else:
+                        lines.pop(i)
+                    replaced = True
+                    break
+            if selection and not replaced:
+                lines.append(f"REACHY_MINI_CUSTOM_PROFILE={selection}")
+            if selection is None and not env_path.exists():
+                return
+            final_text = "\n".join(lines) + "\n"
+            env_path.write_text(final_text, encoding="utf-8")
+            logger.info("Persisted startup personality to %s", env_path)
+            try:
+                from dotenv import load_dotenv
+
+                load_dotenv(dotenv_path=str(env_path), override=True)
+            except Exception:
+                pass
+        except Exception as e:
+            logger.warning("Failed to persist REACHY_MINI_CUSTOM_PROFILE: %s", e)
+
+    def _read_persisted_personality(self) -> Optional[str]:
+        """Read persisted startup personality from instance .env (if any)."""
+        if not self._instance_path:
+            return None
+        env_path = Path(self._instance_path) / ".env"
+        try:
+            if env_path.exists():
+                for ln in env_path.read_text(encoding="utf-8").splitlines():
+                    if ln.strip().startswith("REACHY_MINI_CUSTOM_PROFILE="):
+                        _, _, val = ln.partition("=")
+                        v = val.strip()
+                        return v or None
+        except Exception:
+            pass
+        return None
+
+    _FEATURE_KEYS = (
+        "FEATURE_CRY_DETECTION",
+        "FEATURE_AUTO_SOOTHE",
+        "FEATURE_DANGER_DETECTION",
+        "FEATURE_STORY_TIME",
+        "FEATURE_SIGNAL_ALERTS",
+    )
+
+    def _persist_local_llm_settings(self, settings: dict[str, str]) -> None:
+        """Persist local LLM settings to environment, config, and instance .env.
+
+        Feature flags are applied in-memory only (not persisted to .env) so
+        stale values from previous installs cannot leak across sessions.
+
+        Accepted keys: LOCAL_LLM_URL, LOCAL_LLM_MODEL, LOCAL_LLM_API_KEY,
+        LOCAL_STT_MODEL, SIGNAL_USER_PHONE, MIC_GAIN, and FEATURE_* flags.
+        """
+        # Keys that get persisted to .env
+        persist_keys = (
+            "LOCAL_LLM_URL",
+            "LOCAL_LLM_MODEL",
+            "LOCAL_LLM_API_KEY",
+            "LOCAL_STT_MODEL",
+            "SIGNAL_USER_PHONE",
+            "MIC_GAIN",
+        )
+        all_keys = (*persist_keys, *self._FEATURE_KEYS)
+
+        for key in all_keys:
+            val = (settings.get(key) or "").strip()
+            if not val:
+                continue
+            try:
+                os.environ[key] = val
+            except Exception:
+                pass
+            try:
+                # Feature flags are booleans on config
+                if key.startswith("FEATURE_"):
+                    setattr(config, key, val.lower() == "true")
+                elif key == "MIC_GAIN":
+                    setattr(config, key, float(val))
+                else:
+                    setattr(config, key, val)
+            except Exception:
+                pass
+
+        if not self._instance_path:
+            return
+        try:
+            inst = Path(self._instance_path)
+            env_path = inst / ".env"
+            lines = self._read_env_lines(env_path)
+
+            # Strip stale FEATURE_* lines from .env (they're session-only now)
+            lines = [ln for ln in lines if not any(ln.strip().startswith(f"{fk}=") for fk in self._FEATURE_KEYS)]
+
+            for key in persist_keys:
+                val = (settings.get(key) or "").strip()
+                if not val:
+                    continue
+                replaced = False
+                for i, ln in enumerate(lines):
+                    if ln.strip().startswith(f"{key}="):
+                        lines[i] = f'{key}="{val}"'
+                        replaced = True
+                        break
+                if not replaced:
+                    lines.append(f'{key}="{val}"')
+            final_text = "\n".join(lines) + "\n"
+            env_path.write_text(final_text, encoding="utf-8")
+            logger.info("Persisted local LLM settings to %s", env_path)
+            try:
+                from dotenv import load_dotenv
+
+                load_dotenv(dotenv_path=str(env_path), override=True)
+            except Exception:
+                pass
+        except Exception as e:
+            logger.warning("Failed to persist local LLM settings: %s", e)
+
+    def _init_settings_ui_if_needed(self) -> None:
+        """Attach minimal settings UI to the settings app.
+
+        Always mounts the UI when a settings_app is provided so that users
+        see a confirmation message even if the API key is already configured.
+        """
+        if self._settings_initialized:
+            return
+        if self._settings_app is None:
+            return
+
+        static_dir = Path(__file__).parent / "static"
+        index_file = static_dir / "index.html"
+
+        if hasattr(self._settings_app, "mount"):
+            try:
+                # Serve /static/* assets
+                self._settings_app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+            except Exception:
+                pass
+
+        # GET / -> index.html
+        @self._settings_app.get("/")
+        def _root() -> FileResponse:
+            return FileResponse(str(index_file))
+
+        # GET /favicon.ico -> optional, avoid noisy 404s on some browsers
+        @self._settings_app.get("/favicon.ico")
+        def _favicon() -> Response:
+            return Response(status_code=204)
+
+        # GET /ready -> whether backend finished loading tools
+        @self._settings_app.get("/ready")
+        def _ready() -> JSONResponse:
+            try:
+                mod = sys.modules.get("reachy_mini_conversation_app.tools.core_tools")
+                ready = bool(getattr(mod, "_TOOLS_INITIALIZED", False)) if mod else False
+            except Exception:
+                ready = False
+            return JSONResponse({"ready": ready})
+
+        # GET /app_state -> configuring, running, or stopping
+        @self._settings_app.get("/app_state")
+        def _app_state() -> JSONResponse:
+            return JSONResponse({"state": self._pipeline_state})
+
+        # GET /local_llm_settings -> current local LLM configuration
+        @self._settings_app.get("/local_llm_settings")
+        def _get_local_llm_settings() -> JSONResponse:
+            return JSONResponse(
+                {
+                    "LOCAL_LLM_URL": config.LOCAL_LLM_URL or "",
+                    "LOCAL_LLM_MODEL": config.LOCAL_LLM_MODEL or "",
+                    "LOCAL_LLM_API_KEY": config.LOCAL_LLM_API_KEY or "",
+                    "LOCAL_STT_MODEL": config.LOCAL_STT_MODEL or "",
+                }
+            )
+
+        # GET /feature_settings -> current feature flags
+        @self._settings_app.get("/feature_settings")
+        def _get_feature_settings() -> JSONResponse:
+            return JSONResponse(
+                {
+                    "FEATURE_CRY_DETECTION": config.FEATURE_CRY_DETECTION,
+                    "FEATURE_AUTO_SOOTHE": config.FEATURE_AUTO_SOOTHE,
+                    "FEATURE_DANGER_DETECTION": config.FEATURE_DANGER_DETECTION,
+                    "FEATURE_STORY_TIME": config.FEATURE_STORY_TIME,
+                    "FEATURE_SIGNAL_ALERTS": config.FEATURE_SIGNAL_ALERTS,
+                    "SIGNAL_USER_PHONE": config.SIGNAL_USER_PHONE or "",
+                    "MIC_GAIN": config.MIC_GAIN,
+                }
+            )
+
+        # GET /audio_devices -> list available input devices
+        @self._settings_app.get("/audio_devices")
+        def _audio_devices() -> JSONResponse:
+            try:
+                import sounddevice as sd
+
+                devices = sd.query_devices()
+                default_input = sd.default.device[0]
+                inputs = []
+                for i, d in enumerate(devices):
+                    if d["max_input_channels"] > 0:
+                        inputs.append(
+                            {
+                                "index": i,
+                                "name": d["name"],
+                                "channels": d["max_input_channels"],
+                                "samplerate": d["default_samplerate"],
+                                "is_default": i == default_input,
+                            }
+                        )
+                return JSONResponse({"devices": inputs, "default": default_input})
+            except Exception as e:
+                return JSONResponse({"devices": [], "error": str(e)})
+
+        # POST /test_mic -> record a short audio clip and check signal level
+        @self._settings_app.post("/test_mic")
+        async def _test_mic(request: Request) -> JSONResponse:
+            try:
+                raw = await request.json()
+            except Exception:
+                raw = {}
+            gain = float(raw.get("MIC_GAIN", 1.0))
+            device = raw.get("MIC_DEVICE")
+            if device is not None:
+                try:
+                    device = int(device)
+                except (ValueError, TypeError):
+                    device = None
+            try:
+                import sounddevice as sd
+
+                dev_info = sd.query_devices(device if device is not None else sd.default.device[0])
+                sr = int(dev_info["default_samplerate"])
+                duration = 1.5  # seconds
+                recording = sd.rec(
+                    int(duration * sr),
+                    samplerate=sr,
+                    channels=1,
+                    dtype="float32",
+                    device=device,
+                )
+                sd.wait()
+                audio = recording.flatten() * gain
+                rms = float((audio**2).mean() ** 0.5)
+                peak = float(abs(audio).max())
+                dev_name = dev_info["name"]
+                # Thresholds tuned for speech detection
+                if peak < 0.005:
+                    verdict = "no_signal"
+                    msg = f"No signal from '{dev_name}'. Check that it is connected and not muted."
+                elif rms < 0.01:
+                    verdict = "too_quiet"
+                    msg = f"'{dev_name}' very quiet (RMS: {rms:.4f}). Try increasing gain or moving closer."
+                else:
+                    verdict = "ok"
+                    msg = f"'{dev_name}' working (RMS: {rms:.4f}, Peak: {peak:.4f})."
+                return JSONResponse(
+                    {"ok": True, "verdict": verdict, "message": msg, "rms": round(rms, 5), "peak": round(peak, 5)}
+                )
+            except Exception as e:
+                return JSONResponse(
+                    {"ok": False, "verdict": "error", "message": f"Mic test failed: {e}"}, status_code=500
+                )
+
+        # POST /test_llm -> check if the LLM endpoint is reachable
+        @self._settings_app.post("/test_llm")
+        async def _test_llm(request: Request) -> JSONResponse:
+            try:
+                raw = await request.json()
+            except Exception:
+                raw = {}
+            url = (raw.get("LOCAL_LLM_URL") or config.LOCAL_LLM_URL or "").strip().rstrip("/")
+            model = (raw.get("LOCAL_LLM_MODEL") or config.LOCAL_LLM_MODEL or "").strip()
+            api_key = (raw.get("LOCAL_LLM_API_KEY") or config.LOCAL_LLM_API_KEY or "").strip()
+            if not url:
+                return JSONResponse({"ok": False, "verdict": "no_url", "message": "No server URL configured."})
+            try:
+                import httpx
+
+                headers = {}
+                if api_key and api_key != "ollama":
+                    headers["Authorization"] = f"Bearer {api_key}"
+                async with httpx.AsyncClient(timeout=5.0) as client:
+                    resp = await client.get(f"{url}/models", headers=headers)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        models = [m.get("id", "") for m in data.get("data", [])]
+                        if model and model in models:
+                            return JSONResponse(
+                                {
+                                    "ok": True,
+                                    "verdict": "ok",
+                                    "message": f"Connected. Model '{model}' is available.",
+                                    "models": models,
+                                }
+                            )
+                        elif model:
+                            return JSONResponse(
+                                {
+                                    "ok": True,
+                                    "verdict": "model_missing",
+                                    "message": f"Connected but model '{model}' not found. Available: {', '.join(models[:5])}",
+                                    "models": models,
+                                }
+                            )
+                        else:
+                            return JSONResponse(
+                                {
+                                    "ok": True,
+                                    "verdict": "ok",
+                                    "message": f"Connected. Available models: {', '.join(models[:5])}",
+                                    "models": models,
+                                }
+                            )
+                    else:
+                        return JSONResponse(
+                            {"ok": False, "verdict": "error", "message": f"Server returned {resp.status_code}."}
+                        )
+            except httpx.ConnectError:
+                return JSONResponse(
+                    {
+                        "ok": False,
+                        "verdict": "unreachable",
+                        "message": f"Cannot connect to {url}. Is the server running?",
+                    }
+                )
+            except Exception as e:
+                return JSONResponse({"ok": False, "verdict": "error", "message": f"Connection test failed: {e}"})
+
+        # POST /start_app -> save settings and start the pipeline
+        @self._settings_app.post("/start_app")
+        async def _start_app(request: Request) -> JSONResponse:
+            if self._pipeline_state == "running":
+                return JSONResponse({"ok": True, "already_running": True})
+            try:
+                raw = await request.json()
+            except Exception:
+                raw = {}
+            # Persist whatever settings were sent
+            if raw:
+                # Log feature flags as received from the dashboard
+                feat_vals = {k: raw.get(k) for k in self._FEATURE_KEYS if k in raw}
+                if feat_vals:
+                    logger.info(f"start_app received feature flags: {feat_vals}")
+                self._persist_local_llm_settings(raw)
+                # Also update the handler's live LLM URL and model so start_up() uses them
+                try:
+                    url = (raw.get("LOCAL_LLM_URL") or "").strip()
+                    model = (raw.get("LOCAL_LLM_MODEL") or "").strip()
+                    if url:
+                        self.handler.llm_url = url
+                    if model:
+                        self.handler.llm_model = model
+                except Exception:
+                    pass
+                # Mic device selection (None = use robot SDK media)
+                mic_dev = raw.get("MIC_DEVICE")
+                if mic_dev is not None and mic_dev != "":
+                    try:
+                        self._mic_device = int(mic_dev)
+                        logger.info(f"Mic device set to index {self._mic_device}")
+                    except (ValueError, TypeError):
+                        self._mic_device = None
+                else:
+                    self._mic_device = None
+            # Unblock launch()
+            self._start_event.set()
+            return JSONResponse({"ok": True})
+
+        # Mount personality routes early so /personalities is available on page load
+        # (before the pipeline starts). get_loop returns None until runner() sets
+        # self._asyncio_loop; routes that need the loop (apply, voices) handle that
+        # gracefully (503 / fallback).
+        try:
+            mount_personality_routes(
+                self._settings_app,
+                self.handler,
+                lambda: self._asyncio_loop,
+                persist_personality=self._persist_personality,
+                get_persisted_personality=self._read_persisted_personality,
+            )
+        except Exception:
+            pass
+
+        self._settings_initialized = True
+
+    def launch(self) -> None:
+        """Start the recorder/player and run the async processing loops."""
+        self._stop_event.clear()
+
+        # Try to load an existing instance .env first (covers subsequent runs)
+        if self._instance_path:
+            try:
+                from dotenv import load_dotenv
+
+                from reachy_mini_conversation_app.config import set_custom_profile
+
+                env_path = Path(self._instance_path) / ".env"
+                if env_path.exists():
+                    load_dotenv(dotenv_path=str(env_path), override=True)
+                    new_profile = os.getenv("REACHY_MINI_CUSTOM_PROFILE")
+                    if new_profile is not None:
+                        try:
+                            set_custom_profile(new_profile.strip() or None)
+                        except Exception:
+                            pass
+                    # Reload local LLM settings from instance .env
+                    for env_key in (
+                        "LOCAL_LLM_URL",
+                        "LOCAL_LLM_MODEL",
+                        "LOCAL_LLM_API_KEY",
+                        "LOCAL_STT_MODEL",
+                        "SIGNAL_USER_PHONE",
+                    ):
+                        val = os.getenv(env_key, "").strip()
+                        if val:
+                            try:
+                                setattr(config, env_key, val)
+                            except Exception:
+                                pass
+                    # Reload mic gain
+                    mic_val = os.getenv("MIC_GAIN", "").strip()
+                    if mic_val:
+                        try:
+                            config.MIC_GAIN = float(mic_val)
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+
+        # Wait for user to configure settings and click "Start"
+        if self._settings_app is not None:
+            logger.info("Waiting for user to configure settings via UI and click Start...")
+            self._start_event.wait()  # blocks until POST /start_app is called
+            logger.info("Start signal received, launching pipeline...")
+
+        async def _main_loop() -> None:
+            """Run persistent loop that supports stop/restart cycles."""
+            loop = asyncio.get_running_loop()
+            self._asyncio_loop = loop  # type: ignore[assignment]
+
+            while True:
+                # Clear any leftover stop signal from previous pipeline cycle.
+                # close() sets both _stop_event AND _start_event to unblock,
+                # so a fresh _stop_event during the wait means full shutdown.
+                self._stop_event.clear()
+
+                # Wait for start signal (already set on first run, re-set after stop)
+                while not self._start_event.is_set():
+                    if self._stop_event.is_set():
+                        break
+                    await asyncio.sleep(0.1)
+
+                # If stop was requested while waiting, exit the loop (full shutdown)
+                if self._stop_event.is_set():
+                    break
+
+                self._pipeline_state = "running"
+
+                # Start media (skip recording when using direct mic input)
+                if self._mic_device is None:
+                    self._robot.media.start_recording()
+                self._robot.media.start_playing()
+                await asyncio.sleep(1)  # give pipelines time to start
+
+                self._tasks = [
+                    asyncio.create_task(self.handler.start_up(), name="openai-handler"),
+                    asyncio.create_task(self.record_loop(), name="stream-record-loop"),
+                    asyncio.create_task(self.play_loop(), name="stream-play-loop"),
+                ]
+                try:
+                    await asyncio.gather(*self._tasks)
+                except asyncio.CancelledError:
+                    logger.info("Tasks cancelled during shutdown")
+                except SystemExit:
+                    # A dependency (e.g. reachy_mini_toolbox) called exit()
+                    logger.error("A dependency called exit() — caught to keep the app alive")
+                except Exception as e:
+                    logger.error(f"Pipeline error: {e}", exc_info=True)
+                finally:
+                    await self.handler.shutdown()
+                    # Stop media here (same thread that started it — no race)
+                    if self._mic_device is None:
+                        try:
+                            self._robot.media.stop_recording()
+                        except Exception as e:
+                            logger.debug(f"Error stopping recording: {e}")
+                    try:
+                        self._robot.media.stop_playing()
+                    except Exception as e:
+                        logger.debug(f"Error stopping playback: {e}")
+
+                # If stop was not requested (tasks ended naturally), break out
+                if self._pipeline_state != "configuring":
+                    break
+
+                logger.info("Pipeline stopped, awaiting next start signal...")
+
+        asyncio.run(_main_loop())
+
+    def close(self) -> None:
+        """Stop the stream and underlying media pipelines.
+
+        Called from the stop-event polling thread during full app shutdown.
+        Sets flags and schedules cancellation — media cleanup happens in
+        _main_loop() after tasks exit.
+        """
+        logger.info("Stopping LocalStream...")
+
+        # Signal async loops to stop
+        self._pipeline_state = "shutting_down"
+        self._stop_event.set()
+        # Unblock the wait-for-start loop so _main_loop can exit cleanly
+        self._start_event.set()
+
+        # Cancel all running tasks via the event loop thread
+        loop = self._asyncio_loop
+        if loop is not None and loop.is_running():
+            for task in self._tasks:
+                if not task.done():
+                    loop.call_soon_threadsafe(task.cancel)
+
+    def clear_audio_queue(self) -> None:
+        """Flush the player's appsrc to drop any queued audio immediately."""
+        logger.info("User intervention: flushing player queue")
+        if self._robot.media.backend == MediaBackend.GSTREAMER:
+            # Directly flush gstreamer audio pipe
+            self._robot.media.audio.clear_player()
+        elif (
+            self._robot.media.backend == MediaBackend.DEFAULT
+            or self._robot.media.backend == MediaBackend.DEFAULT_NO_VIDEO
+        ):
+            self._robot.media.audio.clear_output_buffer()
+        self.handler.output_queue = asyncio.Queue()
+
+    async def record_loop(self) -> None:
+        """Read mic frames from the recorder and forward them to the handler."""
+        if self._mic_device is not None:
+            await self._record_loop_sounddevice()
+        else:
+            await self._record_loop_sdk()
+
+    async def _record_loop_sdk(self) -> None:
+        """Read mic frames via the robot SDK media backend."""
+        input_sample_rate = self._robot.media.get_input_audio_samplerate()
+        logger.info(f"record_loop (SDK) started (sample_rate={input_sample_rate})")
+
+        frame_count = 0
+        while not self._stop_event.is_set():
+            audio_frame = self._robot.media.get_audio_sample()
+            if audio_frame is not None:
+                frame_count += 1
+                if frame_count == 1 or frame_count % 500 == 0:
+                    logger.info(f"record_loop (SDK): {frame_count} frames")
+                await self.handler.receive((input_sample_rate, audio_frame))
+            await asyncio.sleep(0)
+
+        logger.info(f"record_loop (SDK) exited (frames={frame_count})")
+
+    async def _record_loop_sounddevice(self) -> None:
+        """Read mic frames directly from a SoundDevice input device."""
+        import queue as thread_queue
+
+        import sounddevice as sd
+
+        dev_info = sd.query_devices(self._mic_device)
+        sr = int(dev_info["default_samplerate"])
+        dev_name = dev_info["name"]
+        audio_q: thread_queue.Queue[bytes] = thread_queue.Queue()
+
+        def _audio_cb(indata: "Any", frames: int, time_info: "Any", status: "Any") -> None:
+            if status:
+                logger.debug(f"SoundDevice status: {status}")
+            audio_q.put(indata.copy())
+
+        stream = sd.InputStream(
+            device=self._mic_device,
+            samplerate=sr,
+            channels=1,
+            dtype="float32",
+            blocksize=1024,
+            callback=_audio_cb,
+        )
+        stream.start()
+        logger.info(f"record_loop (direct) started: '{dev_name}' at {sr}Hz")
+
+        frame_count = 0
+        try:
+            while not self._stop_event.is_set():
+                try:
+                    audio_frame = audio_q.get_nowait()
+                    frame_count += 1
+                    if frame_count == 1 or frame_count % 500 == 0:
+                        logger.info(f"record_loop (direct): {frame_count} frames")
+                    await self.handler.receive((sr, audio_frame))
+                except thread_queue.Empty:
+                    await asyncio.sleep(0.005)
+        finally:
+            stream.stop()
+            stream.close()
+            logger.info(f"record_loop (direct) exited (frames={frame_count})")
+
+    async def play_loop(self) -> None:
+        """Fetch outputs from the handler: log text and play audio frames."""
+        while not self._stop_event.is_set():
+            handler_output = await self.handler.emit()
+
+            if isinstance(handler_output, AdditionalOutputs):
+                for msg in handler_output.args:
+                    content = msg.get("content", "")
+                    if isinstance(content, str):
+                        logger.info(
+                            "role=%s content=%s",
+                            msg.get("role"),
+                            content if len(content) < 500 else content[:500] + "…",
+                        )
+
+            elif isinstance(handler_output, tuple):
+                input_sample_rate, audio_data = handler_output
+                output_sample_rate = self._robot.media.get_output_audio_samplerate()
+
+                # Reshape if needed
+                if audio_data.ndim == 2:
+                    if audio_data.size == 0:
+                        continue
+                    # Scipy channels last convention
+                    if audio_data.shape[1] > audio_data.shape[0]:
+                        audio_data = audio_data.T
+                    # Multiple channels -> Mono channel
+                    if audio_data.shape[1] > 1:
+                        audio_data = audio_data[:, 0]
+
+                # Cast if needed
+                audio_frame = audio_to_float32(audio_data)
+
+                # Resample if needed
+                if input_sample_rate != output_sample_rate:
+                    audio_frame = resample(
+                        audio_frame,
+                        int(len(audio_frame) * output_sample_rate / input_sample_rate),
+                    )
+
+                self._robot.media.push_audio_sample(audio_frame)
+
+            else:
+                logger.debug("Ignoring output type=%s", type(handler_output).__name__)
+
+            await asyncio.sleep(0)  # yield to event loop

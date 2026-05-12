@@ -1,0 +1,237 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width" />
+	<title>Spaceship Game - Reachy Mini</title>
+	<link rel="stylesheet" href="style.css" />
+	<style>
+		.hero {
+			background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+		}
+
+		.feature-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+			gap: 1.5rem;
+			margin: 2rem 0;
+		}
+
+		.feature-card {
+			background: linear-gradient(135deg, #1e293b, #334155);
+			border-radius: 12px;
+			padding: 1.5rem;
+			text-align: center;
+			color: white;
+			border: 2px solid #475569;
+		}
+
+		.feature-icon {
+			font-size: 3rem;
+			margin-bottom: 1rem;
+		}
+
+		.feature-card h3 {
+			color: #0ff;
+			margin-bottom: 0.5rem;
+			font-size: 1.2rem;
+		}
+
+		.feature-card p {
+			color: #cbd5e1;
+			font-size: 0.95rem;
+		}
+
+		.game-preview {
+			background: #000;
+			border-radius: 15px;
+			padding: 2rem;
+			margin: 2rem auto;
+			max-width: 600px;
+			border: 2px solid #0ff;
+			box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+		}
+
+		.game-preview-text {
+			color: #0ff;
+			text-align: center;
+			font-family: 'Courier New', monospace;
+			font-size: 2rem;
+			text-shadow: 0 0 20px #0ff;
+			margin-bottom: 1rem;
+		}
+
+		.controls-list {
+			background: #f8fafc;
+			border-radius: 12px;
+			padding: 2rem;
+			margin: 2rem 0;
+		}
+
+		.controls-list h3 {
+			color: #1e293b;
+			margin-bottom: 1.5rem;
+			text-align: center;
+			font-size: 1.5rem;
+		}
+
+		.control-item {
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+			padding: 1rem;
+			background: white;
+			border-radius: 8px;
+			margin-bottom: 1rem;
+			border-left: 4px solid #667eea;
+		}
+
+		.control-icon {
+			font-size: 2rem;
+			min-width: 50px;
+			text-align: center;
+		}
+
+		.control-text {
+			flex: 1;
+		}
+
+		.control-text strong {
+			color: #667eea;
+			display: block;
+			margin-bottom: 0.25rem;
+		}
+
+		.control-text span {
+			color: #64748b;
+			font-size: 0.95rem;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="hero">
+		<div class="hero-content">
+			<div class="app-icon">🚀✨</div>
+			<h1>Spaceship Game</h1>
+			<p class="tagline">Defend the galaxy with Reachy Mini's head movements and antennas!</p>
+		</div>
+	</div>
+
+	<div class="container">
+		<div class="main-card">
+			<div class="app-preview">
+				<div class="game-preview" style="margin-bottom: 2rem;">
+					<img src="spaceship_game/assets/spaceship.gif" alt="Spaceship Game Screenshot" style="width: 100%; border-radius: 8px; margin-bottom: 1rem;">
+					<div class="game-preview-text">🎮 GAMEPLAY 🎮</div>
+					<p style="color: #fff; text-align: center; font-family: 'Courier New', monospace;">
+						Control a spaceship in 3D space<br>
+						Fight waves of enemy ships<br>
+						Dodge bullets and aim precisely<br>
+						<span style="color: #ff0;">Score points and survive!</span>
+					</p>
+				</div>
+				<div class="game-preview">
+					<img src="spaceship_game/assets/spaceship_control.gif" alt="Spaceship Control Demo" style="width: 100%; border-radius: 8px; margin-bottom: 1rem;">
+					<div class="game-preview-text">🤖 CONTROLS 🤖</div>
+				</div>
+			</div>
+
+			<div class="app-details">
+				<h2>🎯 Game Features</h2>
+				<div class="feature-grid">
+					<div class="feature-card">
+						<div class="feature-icon">🤖</div>
+						<h3>Physical Control</h3>
+						<p>Move Reachy Mini's head to aim your spaceship in 3D space</p>
+					</div>
+					<div class="feature-card">
+						<div class="feature-icon">💥</div>
+						<h3>Dual Weapons</h3>
+						<p>Pull left and right antennas to fire your guns independently</p>
+					</div>
+					<div class="feature-card">
+						<div class="feature-icon">👾</div>
+						<h3>Enemy Waves</h3>
+						<p>Face increasingly difficult waves with three enemy types</p>
+					</div>
+					<div class="feature-card">
+						<div class="feature-icon">🎯</div>
+						<h3>Bullet Patterns</h3>
+						<p>Dodge complex bullet patterns from fast, heavy, and aimed enemies</p>
+					</div>
+				</div>
+
+				<div class="controls-list">
+					<h3>🕹️ How to Play</h3>
+					<div class="control-item">
+						<div class="control-icon">⬆️⬇️</div>
+						<div class="control-text">
+							<strong>Tilt Head Up/Down</strong>
+							<span>Aim your spaceship up and down</span>
+						</div>
+					</div>
+					<div class="control-item">
+						<div class="control-icon">⬅️➡️</div>
+						<div class="control-text">
+							<strong>Turn Head Left/Right</strong>
+							<span>Aim your spaceship left and right</span>
+						</div>
+					</div>
+					<div class="control-item">
+						<div class="control-icon">🔄</div>
+						<div class="control-text">
+							<strong>Tilt Head Sideways</strong>
+							<span>Visual banking effect (for immersion)</span>
+						</div>
+					</div>
+					<div class="control-item">
+						<div class="control-icon">📡</div>
+						<div class="control-text">
+							<strong>Pull Antennas Down</strong>
+							<span>Fire your left and right guns - pull to shoot!</span>
+						</div>
+					</div>
+				</div>
+
+				<div class="how-to-use">
+					<h3>🎮 Enemy Types</h3>
+					<div class="steps">
+						<div class="step">
+							<div class="step-number">🔴</div>
+							<div>
+								<h4>Red Enemies (100pts)</h4>
+								<p>Basic enemies that shoot straight bullets. Good for practice!</p>
+							</div>
+						</div>
+						<div class="step">
+							<div class="step-number">🟠</div>
+							<div>
+								<h4>Orange Enemies (150pts)</h4>
+								<p>Fast movers with aimed shots. They track your position!</p>
+							</div>
+						</div>
+						<div class="step">
+							<div class="step-number">🟣</div>
+							<div>
+								<h4>Purple Enemies (300pts)</h4>
+								<p>Heavy ships with spread shot patterns. Tough but rewarding!</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="footer">
+		<p>
+			🚀 Spaceship Game •
+			<a href="https://github.com/pollen-robotics" target="_blank">Pollen Robotics</a> •
+			<a href="https://huggingface.co/spaces/pollen-robotics/reachy-mini-landing-page#apps" target="_blank">Browse More Apps</a>
+		</p>
+	</div>
+</body>
+
+</html>

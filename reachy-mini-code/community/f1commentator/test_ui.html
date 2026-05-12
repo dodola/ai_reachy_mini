@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test UI Fix</title>
+</head>
+<body>
+    <h1>Testing DOM Element Loading</h1>
+    <select id="year"><option>Loading...</option></select>
+    <select id="race"><option>Select year first</option></select>
+    <div id="output"></div>
+    
+    <script>
+        // Test the fix
+        let elements = {};
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded');
+            
+            elements = {
+                year: document.getElementById('year'),
+                race: document.getElementById('race'),
+                output: document.getElementById('output')
+            };
+            
+            console.log('Elements:', elements);
+            
+            // Test if elements are found
+            let output = '<h2>Element Check:</h2>';
+            for (const [key, element] of Object.entries(elements)) {
+                output += `<p>${key}: ${element ? 'FOUND ✓' : 'NOT FOUND ✗'}</p>`;
+            }
+            
+            elements.output.innerHTML = output;
+            
+            // Test loading years
+            loadYears();
+        });
+        
+        async function loadYears() {
+            try {
+                const response = await fetch('http://localhost:8080/api/races/years');
+                const data = await response.json();
+                
+                console.log('Years data:', data);
+                
+                if (data.years && data.years.length > 0) {
+                    elements.year.innerHTML = '<option value="">Select year...</option>';
+                    data.years.forEach(year => {
+                        const option = document.createElement('option');
+                        option.value = year;
+                        option.textContent = year;
+                        elements.year.appendChild(option);
+                    });
+                    
+                    elements.output.innerHTML += '<p>Years loaded: ' + data.years.join(', ') + '</p>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                elements.output.innerHTML += '<p>Error loading years: ' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>
