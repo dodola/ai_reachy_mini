@@ -24,6 +24,11 @@ class ReachyMotion:
         self._idle_antennas = mcp_tools.IDLE_ANTENNAS
         self._speaker_volume = 100
         self._last_emote_time = 0.0
+        self._gemma = None  # Set via set_gemma()
+
+    def set_gemma(self, gemma):
+        """Set the GemmaVision instance for visual Q&A tools."""
+        self._gemma = gemma
 
     def handle_mcp_call(self, tool_name: str, arguments: dict) -> str:
         """Dispatch an MCP tool call to the appropriate SDK method.
@@ -45,6 +50,10 @@ class ReachyMotion:
                 return self._enable_motors()
             elif tool_name == "reachy.disable_motors":
                 return self._disable_motors()
+            elif tool_name == "reachy.look_around":
+                return self._look_around(arguments)
+            elif tool_name == "reachy.describe_scene":
+                return self._describe_scene(arguments)
             else:
                 return f"Unknown tool: {tool_name}"
         except Exception as e:
@@ -127,6 +136,36 @@ class ReachyMotion:
     def _disable_motors(self) -> str:
         self._mini.disable_motors()
         return "Motors disabled"
+
+    def _look_around(self, args: dict) -> str:
+        question = args.get("question", "")
+        if self._gemma and self._gemma.available:
+            if question:
+                answer = self._gemma.ask_about_scene(question)
+            else:
+                answer = self._gemma.describe_scene(
+                    "Look around and describe what you see. Focus on people, objects, and their activities."
+                )
+            return answer or "I can't see anything right now."
+        elif self._gemma:
+            return "Vision model is not available. Please install Ollama and pull the model."
+        else:
+            return "Vision not configured."
+
+    def _describe_scene(self, args: dict) -> str:
+        detail = args.get("detail", "normal")
+        prompt_map = {
+            "brief": "Describe this scene in one short sentence.",
+            "normal": "Describe this scene in 2-3 sentences. Focus on people and their activities.",
+            "detailed": "Describe this scene in detail. Include all visible people, objects, their positions, activities, and the overall atmosphere.",
+        }
+        prompt = prompt_map.get(detail, prompt_map["normal"])
+        if self._gemma and self._gemma.available:
+            return self._gemma.describe_scene(prompt) or "I can't see anything right now."
+        elif self._gemma:
+            return "Vision model is not available."
+        else:
+            return "Vision not configured."
 
     def on_wake(self):
         """Called when wake word is detected — look up and reset pose."""

@@ -47,6 +47,18 @@ vision:
   tracking_confidence: 0.5      # 人脸追踪置信度
   model_asset_path: ""          # 留空自动下载，或指定本地路径
 
+# Gemma 4 本地视觉理解 (需要 Ollama + GPU)
+# 安装: curl -fsSL https://ollama.com/install.sh | sh
+# 拉模型: ollama pull gemma3:12b
+gemma:
+  enabled: true                 # 视觉理解总开关
+  model: "gemma3:12b"          # Ollama 模型名 (gemma3:4b / gemma3:12b / gemma3:27b)
+  ollama_url: "http://localhost:11434"  # Ollama API 地址
+  capture_fps: 1.0              # 截图帧率
+  auto_describe_interval: 0    # 自动场景描述间隔(秒)，0=关闭
+  max_history: 10               # 场景历史记录最大条数
+  system_prompt: ""              # 自定义系统提示词（留空用默认）
+
 logging:
   level: "INFO"                # DEBUG / INFO / WARNING / ERROR
   file: ""                    # 留空只输出到控制台

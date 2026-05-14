@@ -17,5 +17,9 @@ pyopen-wakeword>=0.4.0
 # Face tracking (optional — install on devices with camera)
 mediapipe>=0.10.0
 
+# Vision (optional — Ollama for Gemma 4)
+requests>=2.28.0
+opencv-python>=4.8.0    # for frame encoding in vision_gemma
+
 # Async
 asyncio-mqtt>=0.16  # optional, for MQTT fallback

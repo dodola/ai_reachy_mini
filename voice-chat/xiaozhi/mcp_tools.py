@@ -124,6 +124,35 @@ MCP_TOOLS = [
             "properties": {},
         },
     },
+    {
+        "name": "reachy.look_around",
+        "description": "使用摄像头观察周围环境，返回场景描述。AI可以据此回答关于环境的问题。",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "question": {
+                    "type": "string",
+                    "description": "关于场景的问题，如'有什么人在？'、'桌上有什么？'",
+                },
+            },
+            "required": [],
+        },
+    },
+    {
+        "name": "reachy.describe_scene",
+        "description": "描述当前摄像头看到的场景，返回详细的场景描述。",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "detail": {
+                    "type": "string",
+                    "enum": ["brief", "normal", "detailed"],
+                    "description": "描述详细程度：brief=1句话, normal=2-3句, detailed=5句以上",
+                },
+            },
+            "required": [],
+        },
+    },
 ]
 
 

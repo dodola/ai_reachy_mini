@@ -8,6 +8,7 @@
 - 👂 **唤醒词**: 离线检测 "okay_nabu" 等唤醒词（可扩展）
 - 😊 **人脸追踪**: MediaPipe FaceLandmarker 实时追踪人脸，头部跟随
 - 🎭 **表情检测**: 从面部 blendshapes 检测情绪，天线随表情动
+- 👁️ **视觉理解**: Gemma 4 本地多模态 AI，看图说话，理解场景
 - 📍 **声源追踪**: 检测说话人方向，头部自动转向
 - 🤖 **MCP 关节控制**: AI 可以控制机器人头部、天线、身体和情绪动作
 - 🔇 **停止词**: 检测 "stop" 停止词中断播放
@@ -15,6 +16,10 @@
 ## 架构
 
 ```
+PC + RTX 4060 16GB
+├── Ollama + Gemma 4 12B (本地多模态推理)
+│   └── 摄像头 → 场景描述 / 视觉问答
+│
 Reachy Mini 硬件
 ├── 麦克风阵列 → SDK get_audio_sample() → 16kHz PCM
 ├── 扬声器     ← SDK push_audio_sample() ← 16kHz PCM
@@ -26,6 +31,7 @@ voice-chat/ (Python 服务)
 ├── 麦克风 → OPUS编码 → WebSocket → xiaozhi 服务器
 ├── WebSocket → OPUS解码 → 重采样 → 扬声器
 ├── 摄像头 → MediaPipe FaceLandmarker → 头部追踪 + 表情检测
+├── 摄像头 → Gemma 4 (Ollama) → 场景描述 / 视觉问答
 ├── MCP 工具调用 → SDK 动作控制
 └── DoA → 声源追踪 → 头部转向
 ```
@@ -106,6 +112,52 @@ AI 可以通过以下工具控制机器人：
 | `reachy.set_volume` | 设置音量 | volume (0-100) |
 | `reachy.enable_motors` | 启用电机 | — |
 | `reachy.disable_motors` | 禁用电机 | — |
+| `reachy.look_around` | 用摄像头观察环境并回答问题 | question (可选) |
+| `reachy.describe_scene` | 描述当前场景 | detail (brief/normal/detailed) |
+
+## 视觉理解 (Gemma 4)
+
+借助于本地运行的 **Gemma 4** 多模态模型，机器人可以"看懂"周围环境：
+
+### 安装 Ollama + Gemma 4
+
+```bash
+# 1. 安装 Ollama
+curl -fsSL https://ollama.com/install.sh | sh
+
+# 2. 拉取模型（根据 GPU 选择）
+# RTX 4060 16GB 推荐:
+ollama pull gemma3:12b       # 约 7GB VRAM，平衡速度和质量
+
+# 其他选项:
+# ollama pull gemma3:4b    # 约 3GB VRAM，最快
+# ollama pull gemma3:27b    # 约 10GB VRAM，最强
+```
+
+### 视觉交互示例
+
+通过 xiaozhi 对话，AI 可以主动调用视觉 MCP 工具：
+
+```
+用户: "你看到了什么？"
+AI:  [调用 reachy.look_around] → "我看到一个穿蓝色衬衫的人坐在书桌前..."
+
+用户: "桌上有多少本书？"
+AI:  [调用 reachy.look_around question="桌上有多少本书？"] → "桌上有3本书..."
+
+用户: "描述一下房间"
+AI:  [调用 reachy.describe_scene detail="detailed"] → "房间里有..."
+```
+
+### 视觉配置
+
+| 项目 | 默认值 | 说明 |
+|------|--------|------|
+| `gemma.enabled` | `true` | 视觉理解开关 |
+| `gemma.model` | `gemma3:12b` | Ollama 模型名 |
+| `gemma.ollama_url` | `http://localhost:11434` | Ollama API 地址 |
+| `gemma.auto_describe_interval` | `0` | 自动描述间隔(秒)，0=关 |
+| `gemma.max_history` | `10` | 场景历史最大条数 |
 
 ## 状态机
 

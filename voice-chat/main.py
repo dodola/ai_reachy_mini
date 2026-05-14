@@ -38,6 +38,7 @@ from reachy.audio import ReachyAudioBridge
 from reachy.doa import DoATracker
 from reachy.motion import ReachyMotion
 from reachy.vision import FaceTracker, FaceFeatures, TrackerConfig, HAS_MEDIAPIPE
+from reachy.vision_gemma import GemmaVision
 from reachy.wakeword import WakeWordDetector
 
 logger = logging.getLogger(__name__)
@@ -65,6 +66,9 @@ class VoiceChatApp:
         # Face tracking
         self._face_tracker: FaceTracker | None = None
         self._face_tracking_enabled = self._config.get("vision", {}).get("enabled", True)
+
+        # Gemma 4 vision (local VLM via Ollama)
+        self._gemma: GemmaVision | None = None
 
         # Async event loop
         self._loop: asyncio.AbstractEventLoop | None = None
@@ -136,6 +140,32 @@ class VoiceChatApp:
             logger.warning("Face tracking failed to start")
             self._face_tracker = None
 
+    def _init_gemma(self):
+        """Initialize Gemma 4 vision model via Ollama."""
+        gemma_cfg = self._config.get("gemma", {})
+        if not gemma_cfg.get("enabled", False):
+            logger.info("Gemma 4 vision disabled in config")
+            return
+
+        self._gemma = GemmaVision(
+            reachy_mini=self._mini,
+            model=gemma_cfg.get("model", "gemma3:12b"),
+            ollama_url=gemma_cfg.get("ollama_url", "http://localhost:11434"),
+            auto_describe_interval=gemma_cfg.get("auto_describe_interval", 0),
+            max_history=gemma_cfg.get("max_history", 10),
+            system_prompt=gemma_cfg.get("system_prompt", ""),
+            capture_fps=gemma_cfg.get("capture_fps", 1.0),
+        )
+
+        if self._gemma.available:
+            self._gemma.start()
+            logger.info("Gemma 4 vision initialized: model=%s", gemma_cfg.get("model", "gemma3:12b"))
+        else:
+            logger.warning("Gemma 4 vision not available — install Ollama and pull model")
+            logger.warning("  curl -fsSL https://ollama.com/install.sh | sh")
+            logger.warning("  ollama pull gemma3:12b")
+            self._gemma = None
+
     def _init_client(self):
         """Initialize xiaozhi WebSocket client."""
         xz_cfg = self._config.get("xiaozhi", {})
@@ -162,6 +192,16 @@ class VoiceChatApp:
 
     def _on_stt(self, text: str):
         logger.info("[STT] %s", text)
+        # If gemma vision is available and user asks about the scene,
+        # inject visual context
+        if self._gemma and self._gemma.available:
+            visual_keywords = ["看到", "看", "什么", "谁", "哪里", "那里", "这里",
+                               "see", "look", "what", "who", "where", "there", "here"]
+            text_lower = text.lower()
+            if any(kw in text_lower for kw in visual_keywords):
+                context = self._gemma.get_conversation_context()
+                if context:
+                    logger.info("[VISION] Injecting context: %s", context[:100])
 
     def _on_llm(self, emotion: str, text: str):
         logger.info("[LLM] emotion=%s text=%s", emotion, text)
@@ -239,9 +279,14 @@ class VoiceChatApp:
         self._init_wakeword()
         self._init_client()
         self._init_face_tracking()
+        self._init_gemma()
 
         self._audio.start()
         self._motion.on_wake()
+
+        # Wire gemma to motion for MCP visual tools
+        if self._gemma:
+            self._motion.set_gemma(self._gemma)
 
         self._loop = asyncio.get_running_loop()
         self._running = True
@@ -350,6 +395,8 @@ class VoiceChatApp:
             self._doa.stop_tracking()
         if self._face_tracker:
             self._face_tracker.stop()
+        if self._gemma:
+            self._gemma.stop()
         if self._motion:
             self._motion.on_idle()
         if self._wakeword:
