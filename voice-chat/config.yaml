@@ -1,0 +1,38 @@
+# Voice Chat for Reachy Mini — Configuration
+# Copy to config.local.yaml and fill in your token.
+
+xiaozhi:
+  server_url: "wss://api.xiaozhi.me/v1/"
+  token: ""               # 从 xiaozhi.me 控制台获取
+  device_id: ""           # 留空自动生成，或手动指定
+  protocol_version: 3     # v1=raw opus, v2=+timestamp, v3=lightweight header
+  reconnect_max_retries: 10
+  reconnect_base_delay: 1.0   # 秒，指数退避基数
+
+audio:
+  input_sample_rate: 16000    # 麦克风采样率 (SDK 固定)
+  output_sample_rate: 16000   # 扬声器采样率 (SDK 固定)
+  opus_frame_duration: 60     # ms
+  channels: 1
+  block_size: 512             # 每次读取采样数 (32ms @ 16kHz)
+  speaker_buffer_seconds: 2.0 # 扬声器缓冲区大小
+
+wakeword:
+  model: "okay_nabu"           # 默认唤醒词
+  stop_model: "stop"           # 停止词
+  refractory_seconds: 2.0     # 唤醒后冷却时间
+  sensitivity: 0.5             # 检测灵敏度 0-1
+
+reachy:
+  connection_mode: "auto"      # auto / localhost_only / network
+  media_backend: "local"       # local / webrtc / no_media
+
+motion:
+  idle_behavior: true           # 空闲时微动
+  speech_sway: true            # 说话时身体微动
+  look_at_speaker: true        # 声源追踪
+  doa_smoothing: 0.3           # DoA 平滑系数 (0-1)
+
+logging:
+  level: "INFO"                # DEBUG / INFO / WARNING / ERROR
+  file: ""                    # 留空只输出到控制台
