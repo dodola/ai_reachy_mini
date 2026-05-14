@@ -33,6 +33,20 @@ motion:
   look_at_speaker: true        # 声源追踪
   doa_smoothing: 0.3           # DoA 平滑系数 (0-1)
 
+vision:
+  enabled: true                 # 人脸追踪总开关
+  fps: 15                       # 人脸检测帧率
+  head_amp_roll: 1.0            # 头部 roll 放大系数
+  head_amp_pitch: 1.0           # 头部 pitch 放大系数
+  head_amp_yaw: 1.0             # 头部 yaw 放大系数
+  roll_max_deg: 20.0            # 最大 roll 角度
+  pitch_max_deg: 20.0           # 最大 pitch 角度
+  yaw_max_deg: 30.0             # 最大 yaw 角度
+  smoothing: 0.3                # 平滑系数 (0-1)
+  detection_confidence: 0.5     # 人脸检测置信度
+  tracking_confidence: 0.5      # 人脸追踪置信度
+  model_asset_path: ""          # 留空自动下载，或指定本地路径
+
 logging:
   level: "INFO"                # DEBUG / INFO / WARNING / ERROR
   file: ""                    # 留空只输出到控制台

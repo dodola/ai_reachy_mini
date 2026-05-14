@@ -14,5 +14,8 @@ opuslib>=3.0.1
 pymicro-wakeword>=0.4.0
 pyopen-wakeword>=0.4.0
 
+# Face tracking (optional — install on devices with camera)
+mediapipe>=0.10.0
+
 # Async
 asyncio-mqtt>=0.16  # optional, for MQTT fallback

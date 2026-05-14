@@ -6,6 +6,8 @@
 
 - 🎤 **语音交互**: 通过 xiaozhi 服务器实现 ASR → LLM → TTS 完整流程
 - 👂 **唤醒词**: 离线检测 "okay_nabu" 等唤醒词（可扩展）
+- 😊 **人脸追踪**: MediaPipe FaceLandmarker 实时追踪人脸，头部跟随
+- 🎭 **表情检测**: 从面部 blendshapes 检测情绪，天线随表情动
 - 📍 **声源追踪**: 检测说话人方向，头部自动转向
 - 🤖 **MCP 关节控制**: AI 可以控制机器人头部、天线、身体和情绪动作
 - 🔇 **停止词**: 检测 "stop" 停止词中断播放
@@ -16,12 +18,14 @@
 Reachy Mini 硬件
 ├── 麦克风阵列 → SDK get_audio_sample() → 16kHz PCM
 ├── 扬声器     ← SDK push_audio_sample() ← 16kHz PCM
+├── 摄像头     → SDK get_frame() → MediaPipe → 人脸追踪/表情
 └── 电机       ← SDK goto_target/set_target
 
 voice-chat/ (Python 服务)
 ├── 麦克风 → 512采样块 → 唤醒词检测 → 触发 WS 连接
 ├── 麦克风 → OPUS编码 → WebSocket → xiaozhi 服务器
 ├── WebSocket → OPUS解码 → 重采样 → 扬声器
+├── 摄像头 → MediaPipe FaceLandmarker → 头部追踪 + 表情检测
 ├── MCP 工具调用 → SDK 动作控制
 └── DoA → 声源追踪 → 头部转向
 ```
@@ -39,6 +43,15 @@ pip install -r requirements.txt
 
 # 安装 reachy-mini-sdk
 pip install reachy-mini-sdk
+
+# 人脸追踪需要 MediaPipe（可选，无摄像头设备可跳过）
+pip install mediapipe
+
+# 下载 MediaPipe 模型（首次运行会自动下载，也可手动）
+# 模型文件: face_landmarker_v2.task
+mkdir -p models
+wget -O models/face_landmarker_v2.task \
+  https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker_v2/float16/latest/face_landmarker_v2.task
 ```
 
 ### 2. 配置
@@ -57,6 +70,8 @@ python main.py --config config.local.yaml
 python main.py
 # 启用调试日志
 python main.py -v
+# 禁用人脸追踪（无摄像头或节省 CPU）
+python main.py --no-face-tracking
 ```
 
 ## 配置说明
@@ -73,6 +88,10 @@ python main.py -v
 | `reachy.connection_mode` | `auto` | 连接模式 (auto/localhost_only/network) |
 | `reachy.media_backend` | `local` | 媒体后端 (local/webrtc/no_media) |
 | `motion.look_at_speaker` | `true` | 声源追踪 |
+| `vision.enabled` | `true` | 人脸追踪总开关 |
+| `vision.fps` | `15` | 人脸检测帧率 |
+| `vision.head_amp_yaw` | `1.0` | 头部偏转放大系数 |
+| `vision.smoothing` | `0.3` | 人脸追踪平滑系数 |
 
 ## MCP 工具
 
@@ -105,6 +124,9 @@ IDLE ──唤醒词──→ CONNECTING ──hello──→ LISTENING ──VA
 | 连接失败 | 检查 token 和网络连接 |
 | 音频延迟 | 减小 block_size (256) 或 frame_duration (40) |
 | OPUS 编码错误 | 降低 protocol_version 为 1 (raw PCM) |
+| MediaPipe 启动失败 | 安装 `mediapipe`，下载模型到 `models/` 目录 |
+| 人脸追踪延迟 | 降低 `vision.fps` (10) 或使用 `--no-face-tracking` |
+| CPU 占用过高 | 关闭人脸追踪或降低帧率 |
 
 ## 相关项目
 

@@ -8,8 +8,14 @@ State machine:
   IDLE → (wake word) → CONNECTING → (hello) → LISTENING
     → (VAD end) → THINKING → (TTS start) → SPEAKING → (TTS end) → IDLE
 
+  Face tracking runs in background during active conversation:
+    - LISTENING: head tracks detected face
+    - THINKING/SPEAKING: head tracks detected face (subtle)
+    - IDLE: face tracking paused, returns to neutral
+
 Usage:
-  python -m voice_chat --config config.yaml
+  python main.py --config config.yaml
+  python main.py --no-face-tracking  # disable face tracking
 """
 
 from __future__ import annotations
@@ -31,6 +37,7 @@ from xiaozhi.mcp_tools import EMOTE_POSES
 from reachy.audio import ReachyAudioBridge
 from reachy.doa import DoATracker
 from reachy.motion import ReachyMotion
+from reachy.vision import FaceTracker, FaceFeatures, TrackerConfig, HAS_MEDIAPIPE
 from reachy.wakeword import WakeWordDetector
 
 logger = logging.getLogger(__name__)
@@ -54,6 +61,10 @@ class VoiceChatApp:
         # Xiaozhi client
         self._codec = OpusCodec()
         self._client: XiaozhiClient | None = None
+
+        # Face tracking
+        self._face_tracker: FaceTracker | None = None
+        self._face_tracking_enabled = self._config.get("vision", {}).get("enabled", True)
 
         # Async event loop
         self._loop: asyncio.AbstractEventLoop | None = None
@@ -90,6 +101,40 @@ class VoiceChatApp:
         )
         self._wakeword.start()
         logger.info("Wake word detector initialized")
+
+    def _init_face_tracking(self):
+        """Initialize face tracking if mediapipe is available."""
+        if not self._face_tracking_enabled:
+            logger.info("Face tracking disabled by user")
+            return
+        if not HAS_MEDIAPIPE:
+            logger.warning("mediapipe not installed — face tracking unavailable")
+            logger.warning("Install with: pip install mediapipe")
+            return
+
+        vision_cfg = self._config.get("vision", {})
+        tracker_config = TrackerConfig(
+            fps=vision_cfg.get("fps", 15),
+            head_amp_roll=vision_cfg.get("head_amp_roll", 1.0),
+            head_amp_pitch=vision_cfg.get("head_amp_pitch", 1.0),
+            head_amp_yaw=vision_cfg.get("head_amp_yaw", 1.0),
+            roll_max_deg=vision_cfg.get("roll_max_deg", 20.0),
+            pitch_max_deg=vision_cfg.get("pitch_max_deg", 20.0),
+            yaw_max_deg=vision_cfg.get("yaw_max_deg", 30.0),
+            smoothing=vision_cfg.get("smoothing", 0.3),
+            detection_confidence=vision_cfg.get("detection_confidence", 0.5),
+            tracking_confidence=vision_cfg.get("tracking_confidence", 0.5),
+            model_asset_path=vision_cfg.get("model_asset_path", ""),
+        )
+
+        self._face_tracker = FaceTracker(self._mini, tracker_config)
+        self._face_tracker.on_features(self._on_face_features)
+        success = self._face_tracker.start()
+        if success:
+            logger.info("Face tracking initialized")
+        else:
+            logger.warning("Face tracking failed to start")
+            self._face_tracker = None
 
     def _init_client(self):
         """Initialize xiaozhi WebSocket client."""
@@ -157,10 +202,34 @@ class VoiceChatApp:
                 self._motion.on_listening()
             if self._doa and self._config.get("motion", {}).get("look_at_speaker", True):
                 self._doa.start_tracking()
+            if self._face_tracker:
+                self._face_tracker.enable_tracking(True)
+        elif state == DeviceState.IDLE:
+            if self._face_tracker:
+                self._face_tracker.enable_tracking(False)
+            if self._doa:
+                self._doa.stop_tracking()
 
     def _on_audio_received(self, opus_frame: bytes):
         if self._audio:
             self._audio.push_speaker_frame(opus_frame)
+
+    def _on_face_features(self, features: FaceFeatures):
+        """Callback from face tracker — detect emotion and report to xiaozhi."""
+        if not features.face_detected:
+            return
+
+        # Detect emotion from face and update robot behavior
+        if self._face_tracker and self._state in (DeviceState.LISTENING, DeviceState.THINKING):
+            emotion = self._face_tracker.detect_emotion(features)
+            if emotion != "neutral":
+                # Map face emotion to subtle antenna movement
+                if emotion == "happy":
+                    self._mini.set_target(antennas=[0.2, -0.2])
+                elif emotion == "surprised":
+                    self._mini.set_target(antennas=[0.35, -0.35])
+                elif emotion == "thinking":
+                    self._mini.set_target(antennas=[0.05, 0.0])
 
     # ── Main loop ────────────────────────────────────────────────
 
@@ -169,6 +238,7 @@ class VoiceChatApp:
         self._init_reachy()
         self._init_wakeword()
         self._init_client()
+        self._init_face_tracking()
 
         self._audio.start()
         self._motion.on_wake()
@@ -278,6 +348,8 @@ class VoiceChatApp:
             self._audio.stop()
         if self._doa:
             self._doa.stop_tracking()
+        if self._face_tracker:
+            self._face_tracker.stop()
         if self._motion:
             self._motion.on_idle()
         if self._wakeword:
@@ -324,9 +396,14 @@ def main():
     parser = argparse.ArgumentParser(description="Voice Chat for Reachy Mini")
     parser.add_argument("-c", "--config", default="config.yaml", help="Config file path")
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable debug logging")
+    parser.add_argument("--no-face-tracking", action="store_true", help="Disable face tracking")
     args = parser.parse_args()
 
     config = load_config(args.config)
+
+    # Command-line overrides
+    if args.no_face_tracking:
+        config.setdefault("vision", {})["enabled"] = False
 
     log_cfg = config.get("logging", {})
     setup_logging(
