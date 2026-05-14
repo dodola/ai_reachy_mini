@@ -7,6 +7,9 @@ pyyaml>=6.0
 # WebSocket
 websockets>=12.0
 
+# HTTP (OTA activation)
+aiohttp>=3.9.0
+
 # OPUS codec
 opuslib>=3.0.1
 

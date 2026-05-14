@@ -31,6 +31,7 @@ from pathlib import Path
 
 import yaml
 
+from xiaozhi.activator import check_and_activate
 from xiaozhi.client import DeviceState, XiaozhiClient
 from xiaozhi.codec import OpusCodec
 from xiaozhi.mcp_tools import EMOTE_POSES
@@ -188,6 +189,52 @@ class VoiceChatApp:
         )
         logger.info("Xiaozhi client initialized")
 
+    async def _activate(self):
+        """Run OTA activation flow to get websocket URL and token.
+
+        This replicates the xiaozhi-esp32 CheckVersion + Activate flow:
+        1. POST system info to OTA URL
+        2. Parse websocket config (url, token, version)
+        3. If activation challenge, POST to /activate
+        4. Apply results to the xiaozhi client
+        """
+        xz_cfg = self._config.get("xiaozhi", {})
+        activation_cfg = xz_cfg.get("activation", {})
+
+        if not activation_cfg.get("enabled", False):
+            logger.info("OTA activation disabled, using config values")
+            return True
+
+        ota_url = activation_cfg.get("ota_url", "https://api.tenclass.net/xiaozhi/ota/")
+        logger.info("Running OTA activation: %s", ota_url)
+
+        result = await check_and_activate(
+            ota_url=ota_url,
+            device_id=self._client.device_id,
+            client_id=self._client.device_id,
+            ota_url_override=activation_cfg.get("ota_url_override", ""),
+            max_activate_retries=activation_cfg.get("max_activate_retries", 10),
+            activate_retry_delay=activation_cfg.get("activate_retry_delay", 3.0),
+            http_timeout=activation_cfg.get("http_timeout", 30.0),
+        )
+
+        if not result.websocket_url:
+            logger.error("OTA activation failed — no websocket URL returned")
+            # Fall back to config values
+            return False
+
+        self._client.apply_activation(result)
+
+        if result.activation_code:
+            logger.info("Activation code: %s — %s", result.activation_code, result.activation_message)
+
+        if not result.activated and result.websocket_url:
+            logger.warning("Activation may be incomplete, but websocket URL available — continuing")
+
+        logger.info("OTA activation complete: url=%s, version=%d, activated=%s",
+                     result.websocket_url, result.websocket_version, result.activated)
+        return True
+
     # ── Callbacks (called from async context) ────────────────────
 
     def _on_stt(self, text: str):
@@ -280,6 +327,9 @@ class VoiceChatApp:
         self._init_client()
         self._init_face_tracking()
         self._init_gemma()
+
+        # Run OTA activation (xiaozhi-esp32 compatible)
+        await self._activate()
 
         self._audio.start()
         self._motion.on_wake()

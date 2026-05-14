@@ -39,7 +39,7 @@ class XiaozhiClient:
 
     def __init__(
         self,
-        server_url: str,
+        server_url: str = "",
         token: str = "",
         device_id: str = "",
         protocol_version: int = 3,
@@ -83,6 +83,27 @@ class XiaozhiClient:
     @property
     def state(self) -> DeviceState:
         return self._state
+
+    def apply_activation(self, activation_result) -> None:
+        """Apply OTA activation result to update connection parameters.
+
+        This replaces server_url, token, and protocol_version from the
+        activation flow (matching xiaozhi-esp32 websocket_protocol.cc).
+        """
+        from .activator import ActivationResult
+
+        if not isinstance(activation_result, ActivationResult):
+            raise TypeError("Expected ActivationResult")
+
+        if activation_result.websocket_url:
+            self.server_url = activation_result.websocket_url
+            logger.info("Activation: server_url updated to %s", self.server_url)
+        if activation_result.websocket_token:
+            self.token = activation_result.websocket_token
+            logger.info("Activation: token updated")
+        if activation_result.websocket_version:
+            self.protocol_version = activation_result.websocket_version
+            logger.info("Activation: protocol_version updated to %d", self.protocol_version)
 
     def _set_state(self, state: DeviceState):
         old = self._state

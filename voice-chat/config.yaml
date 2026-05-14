@@ -2,12 +2,22 @@
 # Copy to config.local.yaml and fill in your token.
 
 xiaozhi:
-  server_url: "wss://api.xiaozhi.me/v1/"
-  token: ""               # 从 xiaozhi.me 控制台获取
+  server_url: "wss://api.xiaozhi.me/v1/"   # 兜底连接地址，OTA激活后会覆盖
+  token: ""               # 从 xiaozhi.me 控制台获取（OTA激活后自动填充）
   device_id: ""           # 留空自动生成，或手动指定
   protocol_version: 3     # v1=raw opus, v2=+timestamp, v3=lightweight header
   reconnect_max_retries: 10
   reconnect_base_delay: 1.0   # 秒，指数退避基数
+
+  # OTA 激活 — 复刻 xiaozhi-esp32 的 CheckVersion + Activate 流程
+  # 启用后自动从 OTA 接口获取 websocket 配置，无需手动填写 server_url 和 token
+  activation:
+    enabled: true
+    ota_url: "https://api.tenclass.net/xiaozhi/ota/"   # 默认 OTA 地址
+    ota_url_override: ""       # 覆盖 OTA 地址（留空用默认值）
+    max_activate_retries: 10  # 激活重试次数
+    activate_retry_delay: 3.0 # 激活重试间隔（秒）
+    http_timeout: 30.0        # HTTP 请求超时（秒）
 
 audio:
   input_sample_rate: 16000    # 麦克风采样率 (SDK 固定)
