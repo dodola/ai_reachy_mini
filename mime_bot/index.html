@@ -10,14 +10,12 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Login View — also used for "Checking sign-in…" while authenticate()
-         resolves on page load; the button text + handler are swapped. -->
+    <!-- Connection status -->
     <div id="loginView" class="login-view">
         <div class="login-card">
             <div class="login-emoji">🪞</div>
             <h2>Mime Bot</h2>
-            <p id="loginMessage">Checking sign-in…</p>
-            <button class="btn-hf hidden" id="btnLogin">Sign in with Hugging Face</button>
+            <p id="loginMessage">Connecting to daemon…</p>
         </div>
     </div>
 
@@ -29,27 +27,13 @@
                 <div class="logo-text">Mime Bot <span>· Reachy Mini</span></div>
             </div>
             <div class="user-section">
-                <div class="user-badge"><span id="username">@user</span></div>
-                <button class="btn-logout" id="btnLogout">Sign out</button>
+                <div class="user-badge"><span id="username">@local</span></div>
             </div>
         </header>
 
         <div class="app-container">
-            <!-- Robot picker (shown automatically after auto-connect, hidden once streaming).
-                 List is populated by the SDK's robotsChanged event. -->
-            <div id="robotSelector" class="panel">
-                <div class="panel-header">
-                    <span id="pickerHeader">Connecting…</span>
-                </div>
-                <div class="panel-content">
-                    <div id="robotList" class="robot-list">
-                        <div class="hint">Talking to the signaling server…</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Live mimicry view (shown when streaming) -->
-            <div id="mimicryView" class="hidden">
+            <!-- Live mimicry view -->
+            <div id="mimicryView">
                 <!-- Two videos side-by-side: raw on the left, the same
                      stream + MediaPipe face mesh overlay on the right.
                      Both <video> elements share the camera MediaStream. -->

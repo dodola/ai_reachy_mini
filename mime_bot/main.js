@@ -1,8 +1,8 @@
-// mime_bot — live face mimicry for Reachy Mini.
+// mime_bot — live face mimicry for Reachy Mini (Offline version).
 //
 // Build status:
-//   ✓ HF auth + connect + robot picker + startSession lifecycle.
-//   ✗ Webcam, FaceLandmarker, mapping, tuner — coming next.
+//   ✓ Offline: direct WebSocket + REST to local daemon (no HF auth)
+//   ✓ Webcam, FaceLandmarker, mapping, tuner — all working
 
 import { ReachyMini, rpyToMatrix } from "./reachy-mini.js";
 
@@ -25,7 +25,6 @@ const robot = new ReachyMini({
     enableMicrophone: false,
 });
 
-let selectedRobotId = null;
 let cameraStream = null;
 let faceLandmarker = null;
 let trackingActive = false;
@@ -387,18 +386,9 @@ function isMirror() { return $("toggleMirror")?.checked ?? true; }
 // ─── DOM helpers ───────────────────────────────────────────
 const $ = (id) => document.getElementById(id);
 
-// ─── Login screen states ───────────────────────────────────
-//
-// The same #loginView is reused for three things:
-//   - "Checking sign-in…"  on page load while authenticate() resolves.
-//   - "Sign in with HF"    if authenticate() returned false.
-//   - "Couldn't connect"   if connect() threw after auth (rare).
-//
-// Hiding the OAuth button when not needed prevents a double-click during
-// the brief "checking" window from triggering a redundant OAuth redirect.
-function setLoginMessage(msg, { showButton = false } = {}) {
+// ─── Login screen states (offline — simplified) ────────────
+function setLoginMessage(msg) {
     $("loginMessage").textContent = msg;
-    $("btnLogin").classList.toggle("hidden", !showButton);
 }
 
 function showLogin() {
@@ -408,22 +398,12 @@ function showLogin() {
 function showMain() {
     $("loginView").classList.add("hidden");
     $("mainApp").classList.remove("hidden");
-    $("username").textContent = "@" + (robot.username || "user");
+    $("username").textContent = "@local";
 }
 
-// View toggling between picker and mimicry inside the main app.
-function showPicker() {
-    $("robotSelector").classList.remove("hidden");
-    $("mimicryView").classList.add("hidden");
-}
 function showMimicry() {
     $("robotSelector").classList.add("hidden");
     $("mimicryView").classList.remove("hidden");
-}
-
-function setPickerHeader(text) {
-    const el = $("pickerHeader");
-    if (el) el.textContent = text;
 }
 
 // ─── Webcam ────────────────────────────────────────────────
@@ -1041,7 +1021,7 @@ function stopSendLoop() {
 // Motor.softReturnToBase() (synchronous fire-and-forget pattern, also
 // safe inside pagehide).
 function sendNeutral() {
-    if (robot.state !== "streaming") return;
+    if (robot.state !== "connected") return;
     try {
         robot.setFullTarget({
             head: INIT_HEAD_POSE,
@@ -1117,56 +1097,12 @@ function applyMirrorClass() {
     else container.classList.remove("mirror-preview");
 }
 
-// ─── Robot picker ──────────────────────────────────────────
-// One-click picker (mirrors marionette_js): tapping a robot card starts
-// the session immediately. No intermediate "Start" button.
-function renderRobotList(robots) {
-    const list = $("robotList");
-    list.innerHTML = "";
-    if (!robots?.length) {
-        setPickerHeader("Looking for your robot");
-        list.innerHTML = '<div class="hint">Power one on and make sure it\'s signed in to your HF account.</div>';
-        return;
-    }
-    setPickerHeader("Pick your robot");
-    for (const r of robots) {
-        const div = document.createElement("div");
-        div.className = "robot-card";
-        div.innerHTML = `<div class="name">${r.meta?.name || "Reachy Mini"}</div>
-                         <div class="id">${r.id.slice(0, 12)}…</div>`;
-        div.onclick = () => pickRobot(r);
-        list.appendChild(div);
-    }
-}
-
-async function pickRobot(r) {
-    selectedRobotId = r.id;
-    $("robotName").textContent = r.meta?.name || "Reachy Mini";
-    setPickerHeader(`Starting session with ${r.meta?.name || "robot"}…`);
-    try {
-        await robot.startSession(r.id);
-        // The 'streaming' handler takes over view + camera + tracking.
-    } catch (e) {
-        console.error("startSession failed:", e);
-        setPickerHeader("Pick your robot");
-        const msg = e.reason?.startsWith("robot_busy")
-            ? `Robot busy — "${e.activeApp || "another app"}" is connected`
-            : `Failed: ${e.message || e}`;
-        alert(msg);
-    }
-}
-
-// ─── Lifecycle event wiring ────────────────────────────────
-robot.addEventListener("robotsChanged", (e) => renderRobotList(e.detail.robots));
-
-robot.addEventListener("streaming", async () => {
+// ─── Lifecycle event wiring (offline) ──────────────────────
+robot.addEventListener("connected", async () => {
     showMimicry();
     applyMirrorClass();
 
-    // Smooth, jerk-free entry: pin current → enable torque → daemon
-    // interpolates to base. Fire-and-forget — daemon does the interp
-    // on its own clock. We then wait that duration before letting the
-    // live 20 Hz stream start, so we don't fight the goto.
+    // Smooth startup
     const settleStart = performance.now();
     let gotoMs = MIN_RETURN_S * 1000;
     try {
@@ -1176,8 +1112,6 @@ robot.addEventListener("streaming", async () => {
         console.warn("Motor.startup failed:", e);
     }
 
-    // Camera + FaceLandmarker init in parallel with the goto (they take
-    // ~1 s combined the first time, similar to the goto duration).
     await startCamera();
     try {
         await initFaceLandmarker();
@@ -1187,7 +1121,6 @@ robot.addEventListener("streaming", async () => {
         return;
     }
 
-    // Wait for whichever is longer: goto settle, or "we're already past it".
     const elapsed = performance.now() - settleStart;
     if (elapsed < gotoMs) await sleep(gotoMs - elapsed);
 
@@ -1195,68 +1128,34 @@ robot.addEventListener("streaming", async () => {
     startSendLoop();
 });
 
-robot.addEventListener("sessionStopped", (e) => {
+robot.addEventListener("disconnected", () => {
     stopSendLoop();
     stopTracking();
     baselineZ = null;
     stopCamera();
-    showPicker();
-    if (e.detail?.message) setStatus("connected", e.detail.message);
-});
-
-robot.addEventListener("disconnected", () => {
-    // Signaling/SSE went away. Drop back to the login screen with a
-    // prompt to re-auth (covers token expiry as well as network drops).
-    setLoginMessage("Disconnected — sign in again to reconnect.", { showButton: true });
+    setLoginMessage("Disconnected — reconnecting…");
     showLogin();
-});
-
-robot.addEventListener("sessionRejected", (e) => {
-    const active = e.detail?.activeApp;
-    alert(active ? `Robot busy — "${active}" is already connected` : "Robot busy");
+    // Auto-reconnect after 2s
+    setTimeout(() => bootstrap(), 2000);
 });
 
 robot.addEventListener("error", (e) => {
     console.error(`[${e.detail.source}]`, e.detail.error);
 });
 
-// ─── Button wiring ─────────────────────────────────────────
-$("btnLogin").addEventListener("click", () => robot.login());
-$("btnLogout").addEventListener("click", () => {
-    robot.logout();
-    setLoginMessage("Sign in to use Mime Bot.", { showButton: true });
-    showLogin();
-});
-
+// ─── Button wiring (offline) ────────────────────────────────
 $("btnSnapshot").addEventListener("click", saveSnapshot);
 
 $("btnStop").addEventListener("click", async () => {
-    // Stop our local commands FIRST so they don't fight the goto.
     stopSendLoop();
     stopTracking();
     baselineZ = null;
     stopCamera();
-    // Hand the daemon a smooth interp back to base; it'll keep going on
-    // its own clock even after stopSession tears the data channel down.
-    if (robot.state === "streaming") {
-        try { await Motor.softReturnToBase(); } catch (e) { console.warn("softReturnToBase:", e); }
-    }
-    try {
-        await robot.stopSession();
-    } catch (e) {
-        console.warn("stopSession:", e);
-    }
+    try { await Motor.softReturnToBase(); } catch (e) { console.warn("softReturnToBase:", e); }
+    robot.disconnect();
 });
 
 // ─── Clean shutdown on tab close / navigation ─────────────
-//
-// pagehide and beforeunload give us a *very* short synchronous window.
-// We can't await sleeps. The trick (per marionette_js): we don't need to
-// — we push three sync commands to the WebRTC data channel and let the
-// daemon execute them on its own clock after the page is gone:
-//   1. setFullTarget(currentPose) — pin goal=current, no jerk
-//   2. setMotorMode("enabled")    — torque on
-//   3. gotoTarget(INIT)           — daemon interps to base
 let _shuttingDown = false;
 function shutdown() {
     if (_shuttingDown) return;
@@ -1265,25 +1164,8 @@ function shutdown() {
         stopSendLoop();
         stopTracking();
         stopCamera();
-        if (robot.state === "streaming") {
-            // Sync version of softReturnToBase — no awaits, just fire.
-            const rs = robot.robotState;
-            if (rs?.headMatrix) {
-                robot.setFullTarget({
-                    head: rs.headMatrix,
-                    antennas: rs.antennasRad,
-                    bodyYaw: rs.bodyYaw ?? 0,
-                });
-            }
-            robot.setMotorMode("enabled");
-            const duration = scaledDuration(rs?.headMatrix, INIT_HEAD_POSE);
-            robot.gotoTarget({
-                head: INIT_HEAD_POSE,
-                antennas: INIT_ANTENNAS,
-                bodyYaw: 0,
-                duration,
-            });
-        }
+        // Fire-and-forget return to base
+        Motor.softReturnToBase().catch(() => {});
     } catch {}
 }
 window.addEventListener("pagehide", shutdown);
@@ -1338,42 +1220,19 @@ document.addEventListener("DOMContentLoaded", () => {
     setInterval(tickLiveDisplay, 70);
 });
 
-// ─── Bootstrap ─────────────────────────────────────────────
-//
-// Mirrors marionette_js's flow: try to silently authenticate from the
-// stored OAuth state (or freshly returned URL parameters), and if that
-// succeeds, auto-connect to the signaling server. The user only ever
-// sees the login screen if they're not signed in.
+// ─── Bootstrap (offline — direct connect) ──────────────────
 async function bootstrap() {
     showLogin();
-    setLoginMessage("Checking sign-in…");
-
-    let authed = false;
-    try {
-        authed = await robot.authenticate();
-    } catch (e) {
-        console.warn("authenticate threw:", e);
-    }
-
-    if (!authed) {
-        setLoginMessage("Sign in to use Mime Bot.", { showButton: true });
-        return;
-    }
-
-    showMain();
-    showPicker();
-    setPickerHeader("Connecting…");
+    setLoginMessage("Connecting to daemon…");
 
     try {
         await robot.connect();
-        setPickerHeader("Looking for your robot");
+        showMain();
+        showMimicry();
+        startCamera();
     } catch (e) {
         console.error("connect failed:", e);
-        setLoginMessage(
-            `Couldn't reach the signaling server: ${e.message || e}. Reload to retry.`,
-            { showButton: true },
-        );
-        showLogin();
+        setLoginMessage(`Cannot reach daemon: ${e.message}. Is the robot connected?`);
     }
 }
 
