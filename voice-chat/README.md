@@ -65,7 +65,8 @@ wget -O models/face_landmarker_v2.task \
 ```bash
 # 复制并编辑配置文件
 cp config.yaml config.local.yaml
-# 填入你的 xiaozhi.me token
+# OTA 激活默认开启 — 自动获取 websocket 地址和 token，无需手动填写
+# 如需手动指定，将 activation.enabled 设为 false 并填入 server_url 和 token
 ```
 
 ### 3. 运行
@@ -80,12 +81,47 @@ python main.py -v
 python main.py --no-face-tracking
 ```
 
+## OTA 激活（xiaozhi-esp32 兼容）
+
+voice-chat 复刻了 xiaozhi-esp32 的完整激活流程，启动时自动完成：
+
+1. **CheckVersion** — POST 系统信息到 OTA URL，获取 websocket 配置和激活挑战
+2. **Activate** — 如有激活挑战，POST 到 `/activate` 端点完成设备认证
+3. **连接** — 使用 OTA 返回的 websocket URL 和 token 建立 WS 连接
+
+激活成功后无需在配置文件中手动填写 `server_url` 和 `token`。
+
+```python
+# xiaozhi-esp32 流程对照：
+# C++:  Ota::CheckVersion()    → POST / OTA → 解析 websocket/config
+# Py:   check_and_activate()   → aiohttp POST → ActivationResult
+#
+# C++:  Ota::Activate()         → POST /activate {challenge, hmac}
+# Py:   check_and_activate()   → POST /activate {} (无序列号)
+#
+# C++:  WebsocketProtocol::OpenAudioChannel()  → 从 NVS 读取 url/token
+# Py:   XiaozhiClient.apply_activation()       → 从 ActivationResult 更新连接参数
+```
+
+### 激活配置
+
+| 项目 | 默认值 | 说明 |
+|------|--------|------|
+| `xiaozhi.activation.enabled` | `true` | 启用 OTA 激活 |
+| `xiaozhi.activation.ota_url` | `https://api.tenclass.net/xiaozhi/ota/` | OTA 接口地址 |
+| `xiaozhi.activation.ota_url_override` | `""` | 覆盖 OTA 地址（留空用默认） |
+| `xiaozhi.activation.max_activate_retries` | `10` | 激活重试次数 |
+| `xiaozhi.activation.activate_retry_delay` | `3.0` | 重试间隔（秒） |
+| `xiaozhi.activation.http_timeout` | `30.0` | HTTP 请求超时（秒） |
+
+禁用激活后，使用配置文件中的 `xiaozhi.server_url` 和 `xiaozhi.token` 连接（兼容手动模式）。
+
 ## 配置说明
 
 | 项目 | 默认值 | 说明 |
 |------|--------|------|
-| `xiaozhi.server_url` | `wss://api.xiaozhi.me/v1/` | xiaozhi 服务器地址 |
-| `xiaozhi.token` | `""` | 从 xiaozhi.me 获取的认证 token |
+| `xiaozhi.server_url` | `wss://api.xiaozhi.me/v1/` | 兜底连接地址，激活后自动覆盖 |
+| `xiaozhi.token` | `""` | 认证 token（激活后自动填充） |
 | `xiaozhi.protocol_version` | `3` | 协议版本 (1=raw, 2=+timestamp, 3=lightweight) |
 | `audio.input_sample_rate` | `16000` | 麦克风采样率 |
 | `audio.block_size` | `512` | 每次读取采样数 (32ms) |
