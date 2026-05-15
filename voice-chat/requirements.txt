@@ -1,5 +1,5 @@
 # Core
-reachy-mini-sdk>=2.0.0
+reachy-mini>=1.7.3
 numpy>=1.24.0
 scipy>=1.10.0
 pyyaml>=6.0

@@ -29,6 +29,8 @@ import time
 import uuid
 from pathlib import Path
 
+import numpy as np
+
 import yaml
 
 from xiaozhi.activator import check_and_activate
@@ -98,6 +100,9 @@ class VoiceChatApp:
     def _init_wakeword(self):
         """Initialize wake word detection."""
         ww_cfg = self._config.get("wakeword", {})
+        if not ww_cfg.get("enabled", True):
+            logger.info("Wake word detection disabled by config")
+            return
         self._wakeword = WakeWordDetector(
             model=ww_cfg.get("model", "okay_nabu"),
             stop_model=ww_cfg.get("stop_model", "stop"),
@@ -174,6 +179,7 @@ class VoiceChatApp:
             server_url=xz_cfg.get("server_url", "wss://api.xiaozhi.me/v1/"),
             token=xz_cfg.get("token", ""),
             device_id=xz_cfg.get("device_id", "") or f"reachy-{uuid.uuid4().hex[:8]}",
+            client_id=xz_cfg.get("client_id", ""),
             protocol_version=xz_cfg.get("protocol_version", 3),
             codec=self._codec,
             on_stt=self._on_stt,
@@ -211,7 +217,7 @@ class VoiceChatApp:
         result = await check_and_activate(
             ota_url=ota_url,
             device_id=self._client.device_id,
-            client_id=self._client.device_id,
+            client_id=self._client.client_id,
             ota_url_override=activation_cfg.get("ota_url_override", ""),
             max_activate_retries=activation_cfg.get("max_activate_retries", 10),
             activate_retry_delay=activation_cfg.get("activate_retry_delay", 3.0),
@@ -269,9 +275,9 @@ class VoiceChatApp:
             self._doa.stop_tracking()
 
     def _on_tts_stop(self):
-        logger.info("[TTS] stop")
+        logger.info("[TTS] stop — ready for next turn")
         if self._motion:
-            self._motion.on_idle()
+            self._motion.on_listening()  # Prepare for next turn
 
     def _on_tts_text(self, text: str):
         logger.debug("[TTS sentence] %s", text)
@@ -346,9 +352,10 @@ class VoiceChatApp:
         # Start audio/wake-word loop
         audio_task = asyncio.create_task(self._audio_loop())
 
-        # Handle signals
-        for sig in (signal.SIGINT, signal.SIGTERM):
-            self._loop.add_signal_handler(sig, lambda: asyncio.create_task(self._shutdown()))
+        # Handle signals (not supported on Windows)
+        if sys.platform != 'win32':
+            for sig in (signal.SIGINT, signal.SIGTERM):
+                self._loop.add_signal_handler(sig, lambda: asyncio.create_task(self._shutdown()))
 
         logger.info("Voice Chat running — say wake word to start")
         try:
@@ -365,17 +372,29 @@ class VoiceChatApp:
         max_retries = xz_cfg.get("reconnect_max_retries", 10)
         base_delay = xz_cfg.get("reconnect_base_delay", 1.0)
 
+        # If wake word is disabled, connect immediately
+        if not self._wakeword:
+            logger.info("Wake word disabled — waiting 1s before connecting...")
+            await asyncio.sleep(1.0)  # Wait for subsystems to initialize
+            logger.info("Ready to connect, client state: %s", self._client.state)
+
         while self._running:
             try:
+                logger.debug("Xiaozhi loop tick, client state: %s", self._client.state)
                 if self._client.state in (DeviceState.IDLE, DeviceState.ERROR):
                     logger.info("Connecting to xiaozhi server...")
                     success = await self._client.connect()
+                    logger.info("Connect result: %s, state: %s", success, self._client.state)
                     if success:
                         retry_count = 0
-                        await self._client.start_listening(mode="auto")
+                        logger.info("Connected, entering receive_loop...")
                         await self._client.receive_loop()
+                        logger.info("receive_loop ended")
                     else:
                         retry_count += 1
+                elif self._client.state == DeviceState.HELLO:
+                    # Connected but waiting for wake word - just wait
+                    await asyncio.sleep(0.1)
 
                 delay = min(base_delay * (2 ** min(retry_count, 5)), 30.0)
                 logger.info("Reconnecting in %.1fs (attempt %d/%d)", delay, retry_count, max_retries)
@@ -392,29 +411,46 @@ class VoiceChatApp:
     async def _audio_loop(self):
         """Process audio: wake word detection and send to xiaozhi."""
         idle_sleep = 0.005
+        loop = asyncio.get_event_loop()
+        logger.info("[AUDIO] Audio loop started")
 
         while self._running:
             try:
-                pcm_frame = self._audio.get_mic_frame(timeout=0.05)
+                # Run blocking get_mic_frame in thread pool to avoid blocking event loop
+                pcm_frame = await loop.run_in_executor(None, lambda: self._audio.get_mic_frame(timeout=0.05))
                 if pcm_frame is None:
                     await asyncio.sleep(idle_sleep)
                     continue
 
-                # Wake word detection
-                if self._wakeword and self._wakeword.is_loaded:
+                # Log that we got a frame
+                if not hasattr(self, '_audio_loop_count'):
+                    self._audio_loop_count = 0
+                self._audio_loop_count += 1
+                if self._audio_loop_count % 200 == 0:
+                    logger.debug("[AUDIO] Loop tick #%d, client state=%s", self._audio_loop_count, self._client.state if self._client else "None")
+
+                # Wake word detection (only in HELLO or IDLE state)
+                if (
+                    self._wakeword 
+                    and self._wakeword.is_loaded 
+                    and self._client 
+                    and self._client.state in (DeviceState.HELLO, DeviceState.IDLE)
+                ):
                     result = self._wakeword.process_chunk(pcm_frame)
                     if result == "wake":
-                        logger.info("Wake word detected!")
+                        logger.info("[WAKE] Wake word detected! client state=%s", self._client.state)
                         if self._motion:
                             self._motion.on_wake()
                         if self._doa:
                             self._doa.look_at_sound_source()
-                        # If not connected, trigger connection
-                        if self._client and self._client.state == DeviceState.IDLE:
-                            asyncio.create_task(self._client.connect())
+                        # If connected (HELLO state), start listening
+                        if self._client and self._client.state == DeviceState.HELLO:
+                            logger.info("[WAKE] Starting listening after wake word...")
                             await self._client.start_listening(mode="auto")
-                        elif self._client:
-                            await self._client.send_wake_word()
+                            logger.info("[WAKE] Listening started, state=%s", self._client.state)
+                        elif self._client and self._client.state == DeviceState.IDLE:
+                            logger.info("[WAKE] Not connected, connecting first...")
+                            asyncio.create_task(self._client.connect())
                     elif result == "stop":
                         logger.info("Stop word detected!")
                         if self._client:
@@ -426,7 +462,22 @@ class VoiceChatApp:
                     and self._client.state == DeviceState.LISTENING
                     and self._audio.is_recording
                 ):
-                    await self._client.send_audio(pcm_frame)
+                    try:
+                        # Check audio level before sending
+                        pcm_array = np.frombuffer(pcm_frame, dtype=np.int16)
+                        audio_level = np.abs(pcm_array).mean()
+                        is_silent = audio_level < 500  # Threshold for silence
+                        
+                        await self._client.send_audio(pcm_frame)
+                        # Log audio sending periodically
+                        if not hasattr(self, '_audio_send_count'):
+                            self._audio_send_count = 0
+                        self._audio_send_count += 1
+                        if self._audio_send_count % 100 == 0:
+                            logger.info("[AUDIO] Sent %d frames, level=%.1f, silent=%s", 
+                                       self._audio_send_count, audio_level, is_silent)
+                    except Exception as e:
+                        logger.error("[AUDIO] Failed to send audio: %s", e)
 
             except Exception as e:
                 logger.error("Audio loop error: %s", e)

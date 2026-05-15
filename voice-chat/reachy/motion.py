@@ -10,7 +10,7 @@ from typing import Optional
 
 import numpy as np
 
-from . import mcp_tools
+from xiaozhi import mcp_tools
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +25,36 @@ class ReachyMotion:
         self._speaker_volume = 100
         self._last_emote_time = 0.0
         self._gemma = None  # Set via set_gemma()
+
+    @staticmethod
+    def _pose_to_matrix(pose: np.ndarray) -> np.ndarray:
+        """Convert a 6-element pose vector [roll, pitch, yaw, x, y, z] to a 4x4 transformation matrix."""
+        if pose.shape == (4, 4):
+            return pose
+        
+        roll, pitch, yaw = pose[0], pose[1], pose[2]
+        x, y, z = pose[3], pose[4], pose[5]
+        
+        # Rotation matrices
+        Rx = np.array([[1, 0, 0],
+                       [0, np.cos(roll), -np.sin(roll)],
+                       [0, np.sin(roll), np.cos(roll)]])
+        
+        Ry = np.array([[np.cos(pitch), 0, np.sin(pitch)],
+                       [0, 1, 0],
+                       [-np.sin(pitch), 0, np.cos(pitch)]])
+        
+        Rz = np.array([[np.cos(yaw), -np.sin(yaw), 0],
+                       [np.sin(yaw), np.cos(yaw), 0],
+                       [0, 0, 1]])
+        
+        R = Rz @ Ry @ Rx
+        
+        T = np.eye(4)
+        T[:3, :3] = R
+        T[:3, 3] = [x, y, z]
+        
+        return T
 
     def set_gemma(self, gemma):
         """Set the GemmaVision instance for visual Q&A tools."""
@@ -72,7 +102,7 @@ class ReachyMotion:
             pose = np.zeros(6)
             for i, v in enumerate(head[:6]):
                 pose[i] = float(v)
-            kwargs["head"] = pose
+            kwargs["head"] = self._pose_to_matrix(pose)
         if antennas is not None:
             kwargs["antennas"] = [float(a) for a in antennas[:2]]
         if body_yaw is not None:
@@ -91,7 +121,7 @@ class ReachyMotion:
             pose = np.zeros(6)
             for i, v in enumerate(head[:6]):
                 pose[i] = float(v)
-            kwargs["head"] = pose
+            kwargs["head"] = self._pose_to_matrix(pose)
         if antennas is not None:
             kwargs["antennas"] = [float(a) for a in antennas[:2]]
         if body_yaw is not None:
@@ -109,7 +139,7 @@ class ReachyMotion:
 
         pose = mcp_tools.EMOTE_POSES.get(name, mcp_tools.EMOTE_POSES["neutral"])
         self._mini.goto_target(
-            head=np.array(pose["head"]),
+            head=self._pose_to_matrix(np.array(pose["head"])),
             antennas=pose["antennas"],
             duration=pose["duration"],
             method="minjerk",
@@ -170,7 +200,7 @@ class ReachyMotion:
     def on_wake(self):
         """Called when wake word is detected — look up and reset pose."""
         self._mini.goto_target(
-            head=np.array([0.0, -0.1, 0.0, 0.0, 0.0, 0.0]),
+            head=self._pose_to_matrix(np.array([0.0, -0.1, 0.0, 0.0, 0.0, 0.0])),
             antennas=self._idle_antennas,
             duration=0.4,
             method="minjerk",
@@ -179,7 +209,7 @@ class ReachyMotion:
     def on_listening(self):
         """Called when listening starts — tilt head slightly."""
         self._mini.goto_target(
-            head=np.array([0.0, 0.05, 0.0, 0.0, 0.0, 0.0]),
+            head=self._pose_to_matrix(np.array([0.0, 0.05, 0.0, 0.0, 0.0, 0.0])),
             duration=0.3,
             method="minjerk",
         )
@@ -187,7 +217,7 @@ class ReachyMotion:
     def on_thinking(self):
         """Called when AI is processing — tilt head and antennas."""
         self._mini.goto_target(
-            head=np.array([0.05, 0.1, -0.1, 0.0, 0.0, 0.0]),
+            head=self._pose_to_matrix(np.array([0.05, 0.1, -0.1, 0.0, 0.0, 0.0])),
             antennas=[0.1, -0.1],
             duration=0.4,
             method="ease_in_out",
@@ -196,7 +226,7 @@ class ReachyMotion:
     def on_speaking(self):
         """Called when TTS starts — neutral head pose."""
         self._mini.goto_target(
-            head=np.array([0.0, -0.05, 0.0, 0.0, 0.0, 0.0]),
+            head=self._pose_to_matrix(np.array([0.0, -0.05, 0.0, 0.0, 0.0, 0.0])),
             antennas=self._idle_antennas,
             duration=0.3,
             method="minjerk",
@@ -205,7 +235,7 @@ class ReachyMotion:
     def on_idle(self):
         """Called when returning to idle — reset to default pose."""
         self._mini.goto_target(
-            head=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
+            head=self._pose_to_matrix(np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])),
             antennas=self._idle_antennas,
             duration=0.8,
             method="ease_in_out",

@@ -42,6 +42,7 @@ class XiaozhiClient:
         server_url: str = "",
         token: str = "",
         device_id: str = "",
+        client_id: str = "",
         protocol_version: int = 3,
         codec: Optional[OpusCodec] = None,
         on_stt: Optional[Callable[[str], None]] = None,
@@ -58,6 +59,7 @@ class XiaozhiClient:
         self.server_url = server_url
         self.token = token
         self.device_id = device_id or uuid.uuid4().hex[:24]
+        self.client_id = client_id or str(uuid.uuid4())
         self.protocol_version = protocol_version
         self.codec = codec or OpusCodec()
 
@@ -125,14 +127,21 @@ class XiaozhiClient:
         headers["Client-Id"] = self.device_id
 
         try:
-            self._ws = await websockets.connect(
-                self.server_url,
-                additional_headers=headers,
-                ping_interval=20,
-                ping_timeout=30,
-                max_size=None,
+            self._ws = await asyncio.wait_for(
+                websockets.connect(
+                    self.server_url,
+                    additional_headers=headers,
+                    ping_interval=20,
+                    ping_timeout=30,
+                    max_size=None,
+                ),
+                timeout=15.0,
             )
             logger.info("WebSocket connected to %s", self.server_url)
+        except asyncio.TimeoutError:
+            logger.error("WebSocket connection timeout (15s)")
+            self._set_state(DeviceState.ERROR)
+            return False
         except Exception as e:
             logger.error("WebSocket connection failed: %s", e)
             self._set_state(DeviceState.ERROR)
@@ -140,17 +149,17 @@ class XiaozhiClient:
 
         hello_msg = {
             "type": "hello",
-            "version": self.protocol_version,
-            "features": {"mcp": True, "aec": False},
+            "version": 1,
             "transport": "websocket",
             "audio_params": {
                 "format": "opus",
                 "sample_rate": 16000,
                 "channels": 1,
-                "frame_duration": 60,
+                "frame_duration": 20,  # Match Android app
             },
         }
         await self._send_json(hello_msg)
+        logger.debug("Sent hello message, waiting for response...")
 
         try:
             raw = await asyncio.wait_for(self._ws.recv(), timeout=10.0)
@@ -226,19 +235,31 @@ class XiaozhiClient:
         """Encode PCM audio and send as binary frame."""
         if self._ws is None or self._state == DeviceState.IDLE:
             return
-        opus_frame = self.codec.encode(pcm_data)
-        if opus_frame is None:
-            return
+        try:
+            opus_frame = self.codec.encode(pcm_data)
+            if opus_frame is None:
+                return
 
-        if self.protocol_version == 3:
-            payload = struct.pack("!BBH", 0, 0, len(opus_frame)) + opus_frame
-            await self._ws.send(payload)
-        elif self.protocol_version == 2:
-            ts = int(time.time() * 1000) & 0xFFFFFFFF
-            payload = struct.pack("!HHIIB", 2, 0, 0, ts, len(opus_frame)) + opus_frame
-            await self._ws.send(payload)
-        else:
-            await self._ws.send(opus_frame)
+            if self.protocol_version == 3:
+                payload = struct.pack("!BBH", 0, 0, len(opus_frame)) + opus_frame
+                await self._ws.send(payload)
+            elif self.protocol_version == 2:
+                ts = int(time.time() * 1000) & 0xFFFFFFFF
+                payload = struct.pack("!HHIIB", 2, 0, 0, ts, len(opus_frame)) + opus_frame
+                await self._ws.send(payload)
+            else:
+                await self._ws.send(opus_frame)
+            
+            # Log send details periodically
+            if not hasattr(self, '_send_count'):
+                self._send_count = 0
+            self._send_count += 1
+            if self._send_count % 500 == 0:
+                logger.debug("[SEND] Sent %d frames, protocol=%d, opus_size=%d", 
+                           self._send_count, self.protocol_version, len(opus_frame))
+        except Exception as e:
+            logger.error("[SEND_AUDIO] Error: %s", e)
+            raise
 
     async def send_mcp_response(self, request_id: int, result: dict):
         """Send MCP tool call response back to server."""
@@ -299,7 +320,9 @@ class XiaozhiClient:
                     self.on_tts_start()
             elif state == "stop":
                 logger.info("TTS stop")
-                self._set_state(DeviceState.IDLE)
+                # Multi-turn: go back to LISTENING instead of IDLE
+                # This allows user to continue speaking without wake word
+                self._set_state(DeviceState.LISTENING)
                 if self.on_tts_stop:
                     self.on_tts_stop()
             elif state == "sentence_start":

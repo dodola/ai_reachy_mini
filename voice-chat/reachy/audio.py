@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class ReachyAudioBridge:
     """Bridge between Reachy Mini hardware audio and the xiaozhi client."""
 
-    BLOCK_SIZE = 512
+    BLOCK_SIZE = 320  # 20ms at 16kHz (match OPUS frame duration)
     MIC_SAMPLE_RATE = 16000
 
     def __init__(self, reachy_mini, codec, config: Optional[dict] = None):

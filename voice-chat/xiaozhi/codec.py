@@ -16,9 +16,10 @@ logger = logging.getLogger(__name__)
 
 try:
     import opuslib
-
+    # Test if opuslib actually works (needs libopus library)
+    opuslib.Encoder(16000, 1, opuslib.APPLICATION_VOIP)
     HAS_OPUSLIB = True
-except ImportError:
+except Exception:
     HAS_OPUSLIB = False
     logger.warning("opuslib not available — audio will use raw PCM fallback")
 
@@ -26,7 +27,7 @@ except ImportError:
 class OpusCodec:
     """OPUS encoder/decoder for xiaozhi audio streaming."""
 
-    FRAME_DURATION_MS = 60
+    FRAME_DURATION_MS = 20  # Match Android app (20ms)
     INPUT_SAMPLE_RATE = 16000
     OUTPUT_SAMPLE_RATE = 24000
     CHANNELS = 1
@@ -94,7 +95,15 @@ class OpusCodec:
                 pcm_bytes = pcm_bytes[: self.input_bytes_per_frame]
 
         try:
-            return self._encoder.encode(pcm_bytes, self._frame_size)
+            encoded = self._encoder.encode(pcm_bytes, self._frame_size)
+            # Log encoding details periodically
+            if not hasattr(self, '_encode_count'):
+                self._encode_count = 0
+            self._encode_count += 1
+            if self._encode_count % 500 == 0:
+                logger.debug("[OPUS] Encoded %d frames, input=%d bytes, output=%d bytes", 
+                           self._encode_count, len(pcm_bytes), len(encoded))
+            return encoded
         except Exception as e:
             logger.error("OPUS encode error: %s", e)
             return None
