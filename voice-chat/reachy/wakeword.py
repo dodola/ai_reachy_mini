@@ -154,20 +154,20 @@ class WakeWordDetector:
         kw_file = _CACHE_DIR / "keywords.txt"
         _CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
-        # Log first 5 raw lines so we can see the actual token format
+        # Log first 5 raw lines — visible in default (non-verbose) output
         with open(tokens_file, "rb") as f:
             sample = [f.readline().rstrip(b"\r\n") for _ in range(5)]
-        logger.debug("tokens.txt first 5 lines (raw): %s", sample)
+        logger.warning("tokens.txt first 5 lines (raw): %s", sample)
 
         # Build char → raw_bytes map from tokens.txt (binary, no encoding assumption)
+        # split() handles both space and tab separators
         char_to_bytes: dict[str, bytes] = {}
         with open(tokens_file, "rb") as f:
             for raw_line in f:
-                # Format: "<token_bytes> <integer_id>"
-                parts = raw_line.rstrip(b"\r\n").rsplit(b" ", 1)
-                if len(parts) != 2:
+                parts = raw_line.rstrip().split()  # any whitespace separator
+                if len(parts) < 2:
                     continue
-                token_raw = parts[0]
+                token_raw = parts[0]  # token is always the first field
                 for enc in ("utf-8", "gbk"):
                     try:
                         char = token_raw.decode(enc)
