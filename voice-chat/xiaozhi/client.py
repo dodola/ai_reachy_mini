@@ -50,7 +50,7 @@ class XiaozhiClient:
         on_tts_start: Optional[Callable[[], None]] = None,
         on_tts_stop: Optional[Callable[[], None]] = None,
         on_tts_text: Optional[Callable[[str], None]] = None,
-        on_mcp_call: Optional[Callable[[dict], dict]] = None,
+        on_mcp_call: Optional[Callable[[str, dict], dict]] = None,
         on_state_change: Optional[Callable[[DeviceState], None]] = None,
         on_audio_received: Optional[Callable[[bytes], None]] = None,
         reconnect_max_retries: int = 10,
@@ -58,8 +58,14 @@ class XiaozhiClient:
     ):
         self.server_url = server_url
         self.token = token
-        self.device_id = device_id or uuid.uuid4().hex[:24]
-        self.client_id = client_id or str(uuid.uuid4())
+        if not device_id or not client_id:
+            from .activator import load_or_create_identity
+            _did, _cid = load_or_create_identity()
+            device_id = device_id or _did
+            client_id = client_id or _cid
+
+        self.device_id = device_id
+        self.client_id = client_id
         self.protocol_version = protocol_version
         self.codec = codec or OpusCodec()
 
@@ -124,7 +130,7 @@ class XiaozhiClient:
             headers["Authorization"] = auth
         headers["Protocol-Version"] = str(self.protocol_version)
         headers["Device-Id"] = self.device_id
-        headers["Client-Id"] = self.device_id
+        headers["Client-Id"] = self.client_id
 
         try:
             self._ws = await asyncio.wait_for(
@@ -240,26 +246,22 @@ class XiaozhiClient:
             if opus_frame is None:
                 return
 
-            if self.protocol_version == 3:
-                payload = struct.pack("!BBH", 0, 0, len(opus_frame)) + opus_frame
-                await self._ws.send(payload)
-            elif self.protocol_version == 2:
-                ts = int(time.time() * 1000) & 0xFFFFFFFF
-                payload = struct.pack("!HHIIB", 2, 0, 0, ts, len(opus_frame)) + opus_frame
-                await self._ws.send(payload)
-            else:
-                await self._ws.send(opus_frame)
-            
-            # Log send details periodically
-            if not hasattr(self, '_send_count'):
-                self._send_count = 0
-            self._send_count += 1
-            if self._send_count % 500 == 0:
-                logger.debug("[SEND] Sent %d frames, protocol=%d, opus_size=%d", 
-                           self._send_count, self.protocol_version, len(opus_frame))
-        except Exception as e:
-            logger.error("[SEND_AUDIO] Error: %s", e)
-            raise
+        if self.protocol_version == 3:
+            payload = struct.pack("!BBH", 0, 0, len(opus_frame)) + opus_frame
+            await self._ws.send(payload)
+        elif self.protocol_version == 2:
+            ts = int(time.time() * 1000) & 0xFFFFFFFF
+            payload = struct.pack("!HHIII", 2, 0, 0, ts, len(opus_frame)) + opus_frame
+            await self._ws.send(payload)
+        else:
+            await self._ws.send(opus_frame)
+
+        if not hasattr(self, '_send_count'):
+            self._send_count = 0
+        self._send_count += 1
+        if self._send_count % 500 == 0:
+            logger.debug("[SEND] Sent %d frames, protocol=%d, opus_size=%d",
+                       self._send_count, self.protocol_version, len(opus_frame))
 
     async def send_mcp_response(self, request_id: int, result: dict):
         """Send MCP tool call response back to server."""
@@ -359,10 +361,10 @@ class XiaozhiClient:
             _, _, payload_size = struct.unpack("!BBH", data[:4])
             return data[4 : 4 + payload_size]
         elif self.protocol_version == 2:
-            if len(data) < 15:
+            if len(data) < 16:
                 return None
-            _, _, _, _, payload_size = struct.unpack("!HHIIB", data[:15])
-            return data[15 : 15 + payload_size]
+            _, _, _, _, payload_size = struct.unpack("!HHIII", data[:16])
+            return data[16 : 16 + payload_size]
         else:
             return data
 

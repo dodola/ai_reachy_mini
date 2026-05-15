@@ -14,6 +14,7 @@ which sends an empty JSON {} to /activate.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -21,6 +22,7 @@ import platform
 import time
 import uuid
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Optional
 
 import aiohttp
@@ -30,6 +32,38 @@ logger = logging.getLogger(__name__)
 DEFAULT_OTA_URL = "https://api.tenclass.net/xiaozhi/ota/"
 APP_VERSION = "1.0.0"
 APP_NAME = "reachy-mini-voice-chat"
+
+_IDENTITY_PATH = Path.home() / ".config" / "reachy-voice-chat" / "identity.json"
+
+
+def load_or_create_identity(identity_path: Path = _IDENTITY_PATH) -> tuple[str, str]:
+    """Load persisted device_id and client_id, or create and save new ones.
+
+    Returns:
+        (device_id, client_id) — stable across restarts
+    """
+    if identity_path.exists():
+        try:
+            data = json.loads(identity_path.read_text())
+            device_id = data.get("device_id", "")
+            client_id = data.get("client_id", "")
+            if device_id and client_id:
+                logger.debug("Loaded identity: device_id=%s", device_id)
+                return device_id, client_id
+        except Exception as e:
+            logger.warning("Failed to load identity file, regenerating: %s", e)
+
+    h = uuid.uuid4().hex[:12]
+    device_id = ":".join(h[i:i+2] for i in range(0, 12, 2))
+    client_id = str(uuid.uuid4())
+
+    identity_path.parent.mkdir(parents=True, exist_ok=True)
+    identity_path.write_text(json.dumps({
+        "device_id": device_id,
+        "client_id": client_id,
+    }, indent=2))
+    logger.info("Created new identity: device_id=%s, saved to %s", device_id, identity_path)
+    return device_id, client_id
 
 
 @dataclass
@@ -48,21 +82,13 @@ class ActivationResult:
     firmware_url: str = ""
 
 
-def _generate_device_id() -> str:
-    """Generate a persistent device ID (MAC-style)."""
-    return uuid.uuid4().hex[:12].upper()
-
-
-def _generate_client_id() -> str:
-    """Generate a persistent client UUID (v4)."""
-    return str(uuid.uuid4())
-
-
 def _get_system_info(device_id: str, client_id: str) -> dict:
-    """Build system info JSON matching xiaozhi-esp32 format."""
+    """Build system info JSON matching xiaozhi-esp32 board.cc::GetSystemInfoJson() exactly."""
     return {
         "version": 2,
         "language": "zh",
+        "flash_size": 0,
+        "minimum_free_heap_size": "0",
         "mac_address": device_id,
         "uuid": client_id,
         "chip_model_name": "esp32s3",
@@ -79,6 +105,8 @@ def _get_system_info(device_id: str, client_id: str) -> dict:
             "idf_version": "v5.3.1",
             "elf_sha256": "0" * 64,
         },
+        "partition_table": [],
+        "ota": {"label": "ota_0"},
         "board": {
             "type": "xiaozhi-esp32",
             "name": "xiaozhi",
@@ -125,8 +153,10 @@ async def check_and_activate(
     if ota_url_override:
         ota_url = ota_url_override
 
-    device_id = device_id or _generate_device_id()
-    client_id = client_id or _generate_client_id()
+    if not device_id or not client_id:
+        _did, _cid = load_or_create_identity()
+        device_id = device_id or _did
+        client_id = client_id or _cid
     result = ActivationResult()
 
     user_agent = _get_user_agent(device_id, client_id)
@@ -207,7 +237,7 @@ async def check_and_activate(
         logger.info("Activation code: %s (%s)", result.activation_code, result.activation_message)
 
     # Activate loop — PC has no serial number, send empty JSON {}
-    activate_url = ota_url.rstrip("/") + "/activate" if ota_url.rstrip("/").endswith(ota_url.rstrip("/")) else ota_url.rstrip("/") + "/activate"
+    activate_url = ota_url.rstrip("/") + "/activate"
 
     for attempt in range(1, max_activate_retries + 1):
         logger.info("Activation attempt %d/%d: POST %s", attempt, max_activate_retries, activate_url)
@@ -221,23 +251,17 @@ async def check_and_activate(
                         return result
                     elif resp.status == 202:
                         logger.info("Activation pending (202), retrying in %.1fs...", activate_retry_delay)
-                        await asyncio_sleep(activate_retry_delay)
+                        await asyncio.sleep(activate_retry_delay)
                         continue
                     else:
                         body = await resp.text()
                         logger.error("Activation failed: status=%d body=%s", resp.status, body[:200])
-                        await asyncio_sleep(activate_retry_delay)
+                        await asyncio.sleep(activate_retry_delay)
                         continue
         except Exception as e:
             logger.error("Activation request failed: %s", e)
-            await asyncio_sleep(activate_retry_delay)
+            await asyncio.sleep(activate_retry_delay)
             continue
 
     logger.warning("Activation failed after %d attempts", max_activate_retries)
     return result
-
-
-async def asyncio_sleep(seconds: float):
-    """Sleep without importing asyncio at module level."""
-    import asyncio
-    await asyncio.sleep(seconds)
