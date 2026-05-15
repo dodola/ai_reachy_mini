@@ -158,27 +158,18 @@ class WakeWordDetector:
         encoder, decoder, joiner = self._find_onnx_files(model_dir)
         keywords_file = self._write_keywords_file()
 
-        config = sherpa_onnx.KeywordSpotterConfig(
-            feat_config=sherpa_onnx.FeatureExtractorConfig(
-                sample_rate=16000,
-                feature_dim=80,
-            ),
-            model_config=sherpa_onnx.OnlineModelConfig(
-                transducer=sherpa_onnx.OnlineTransducerModelConfig(
-                    encoder=encoder,
-                    decoder=decoder,
-                    joiner=joiner,
-                ),
-                tokens=str(model_dir / "tokens.txt"),
-                num_threads=self._num_threads,
-                provider="cpu",
-            ),
+        self._spotter = sherpa_onnx.KeywordSpotter(
+            tokens=str(model_dir / "tokens.txt"),
+            encoder=encoder,
+            decoder=decoder,
+            joiner=joiner,
             keywords_file=str(keywords_file),
             keywords_score=self._keywords_score,
             keywords_threshold=self._keywords_threshold,
+            num_threads=self._num_threads,
             num_trailing_blanks=1,
+            provider="cpu",
         )
-        self._spotter = sherpa_onnx.KeywordSpotter(config)
         self._stream = self._spotter.create_stream()
 
     # ── Detection loop (background thread) ───────────────────────
