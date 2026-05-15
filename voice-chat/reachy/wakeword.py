@@ -144,31 +144,25 @@ class WakeWordDetector:
         return str(encoders[0]), str(decoders[0]), str(joiners[0])
 
     def _write_keywords_file(self, model_dir: Path) -> Path:
-        """Write keywords.txt using exact byte sequences from tokens.txt.
+        """Write keywords.txt matched to the model's token format.
 
-        Reads tokens.txt in binary mode so the bytes written to keywords.txt
-        are identical to what C++ will find — completely encoding-agnostic.
-        Also logs a sample of tokens.txt and any missing characters.
+        This model (wenetspeech) uses uppercase pinyin letters as tokens
+        (A=3, B=4, …). Chinese keywords must be converted to pinyin first,
+        then expanded letter-by-letter: 小智 → XIAO ZHI → X I A O Z H I.
         """
         tokens_file = model_dir / "tokens.txt"
         kw_file = _CACHE_DIR / "keywords.txt"
         _CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
-        # Log first 5 raw lines — visible in default (non-verbose) output
-        with open(tokens_file, "rb") as f:
-            sample = [f.readline().rstrip(b"\r\n") for _ in range(5)]
-        logger.warning("tokens.txt first 5 lines (raw): %s", sample)
-
-        # Build char → raw_bytes map from tokens.txt (binary, no encoding assumption)
-        # split() handles both space and tab separators
+        # Build char → raw_bytes map (binary, encoding-agnostic)
         char_to_bytes: dict[str, bytes] = {}
         with open(tokens_file, "rb") as f:
             for raw_line in f:
-                parts = raw_line.rstrip().split()  # any whitespace separator
+                parts = raw_line.rstrip().split()
                 if len(parts) < 2:
                     continue
-                token_raw = parts[0]  # token is always the first field
-                for enc in ("utf-8", "gbk"):
+                token_raw = parts[0]
+                for enc in ("utf-8", "gbk", "ascii"):
                     try:
                         char = token_raw.decode(enc)
                         if char not in char_to_bytes:
@@ -177,27 +171,82 @@ class WakeWordDetector:
                     except (UnicodeDecodeError, ValueError):
                         pass
 
-        all_kw = sorted(self._wake_keywords) + sorted(self._stop_keywords)
-        all_chars = set("".join(all_kw))
-        missing = all_chars - set(char_to_bytes)
-        if missing:
-            logger.warning("Chars not in tokens.txt: %s — keywords may not work", sorted(missing))
-        else:
-            logger.info("All keyword chars found in tokens.txt")
+        # Detect model token format: letter-based (pinyin) or character-based
+        is_pinyin_model = "A" in char_to_bytes and "小" not in char_to_bytes
+        logger.info("Token format: %s", "pinyin letters" if is_pinyin_model else "Chinese chars")
 
+        all_kw = sorted(self._wake_keywords) + sorted(self._stop_keywords)
         with open(kw_file, "wb") as f:
             for kw in all_kw:
-                parts = [char_to_bytes.get(c, c.encode("utf-8")) for c in kw]
-                f.write(b" ".join(parts) + b"\n")
+                if is_pinyin_model:
+                    letters = self._to_pinyin_letters(kw)
+                    token_parts = [char_to_bytes.get(c, c.encode("ascii")) for c in letters]
+                    logger.info("Keyword %r → %s", kw, " ".join(letters))
+                else:
+                    token_parts = [char_to_bytes.get(c, c.encode("utf-8")) for c in kw]
+                f.write(b" ".join(token_parts) + b"\n")
 
-        logger.debug("Keywords written: %s", [" ".join(kw) for kw in all_kw])
         return kw_file
+
+    @staticmethod
+    def _to_pinyin_letters(keyword: str) -> list[str]:
+        """Convert Chinese chars to uppercase pinyin letters.
+
+        '小智' → ['X', 'I', 'A', 'O', 'Z', 'H', 'I']
+
+        Uses pypinyin when available; falls back to a hardcoded table for
+        the most common keywords.
+        """
+        try:
+            from pypinyin import lazy_pinyin, Style
+            syllables = lazy_pinyin(keyword, style=Style.NORMAL)
+            return [c.upper() for s in syllables for c in s]
+        except ImportError:
+            pass
+
+        _TABLE = {
+            '小': 'XIAO', '智': 'ZHI',  '停': 'TING', '止': 'ZHI',
+            '你': 'NI',   '好': 'HAO',  '我': 'WO',   '是': 'SHI',
+            '开': 'KAI',  '关': 'GUAN', '听': 'TING', '说': 'SHUO',
+            '来': 'LAI',  '去': 'QU',   '看': 'KAN',  '做': 'ZUO',
+            '吗': 'MA',   '呢': 'NE',   '吧': 'BA',   '啊': 'A',
+            '的': 'DE',   '了': 'LE',   '在': 'ZAI',  '有': 'YOU',
+        }
+        result = []
+        missing = []
+        for char in keyword:
+            py = _TABLE.get(char)
+            if py:
+                result.extend(list(py))
+            else:
+                missing.append(char)
+        if missing:
+            raise ValueError(
+                f"Characters {missing} not in fallback table. "
+                f"Run: pip install pypinyin"
+            )
+        return result
 
     def _load_model(self, model_dir: Path):
         import sherpa_onnx
 
         encoder, decoder, joiner = self._find_onnx_files(model_dir)
         keywords_file = self._write_keywords_file(model_dir)
+
+        # Build pinyin→original map so the detection loop can reverse the conversion
+        self._pinyin_to_original: dict[str, str] = {}
+        all_kw = sorted(self._wake_keywords) + sorted(self._stop_keywords)
+        is_pinyin = not any(c.isascii() and c.isupper() for c in "".join(all_kw))
+        if is_pinyin:
+            for kw in all_kw:
+                try:
+                    letters = self._to_pinyin_letters(kw)
+                    pinyin_key = " ".join(letters)
+                    self._pinyin_to_original[pinyin_key] = kw
+                except Exception:
+                    pass
+        else:
+            self._pinyin_to_original = {}
 
         self._spotter = sherpa_onnx.KeywordSpotter(
             tokens=str(model_dir / "tokens.txt"),
@@ -235,19 +284,21 @@ class WakeWordDetector:
                 if not result.keyword:
                     continue
 
-                # Normalize: model may return space-separated chars ("小 智 小 智")
-                keyword = result.keyword.strip().replace(" ", "")
-                logger.info("Keyword detected: %r", keyword)
+                # result.keyword is the matched keyword string (may be pinyin like "XIAO ZHI...")
+                # Match back to the original Chinese keyword via our index
+                matched = result.keyword.strip()
+                logger.info("Keyword detected: %r", matched)
 
                 # Reset stream to avoid immediate re-trigger on the same audio
                 self._stream = self._spotter.create_stream()
 
                 now = time.monotonic()
-                if keyword in self._wake_keywords:
+                original = self._pinyin_to_original.get(matched, matched)
+                if original in self._wake_keywords:
                     if now - self._last_wake_time > self._refractory_seconds:
                         self._last_wake_time = now
                         self._result_queue.put("wake")
-                elif keyword in self._stop_keywords:
+                elif original in self._stop_keywords:
                     self._result_queue.put("stop")
 
             except Exception as e:
