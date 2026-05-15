@@ -281,12 +281,12 @@ class WakeWordDetector:
                     self._spotter.decode_stream(self._stream)
 
                 result = self._spotter.get_result(self._stream)
-                if not result.keyword:
+                # API differs by version: some return an object with .keyword,
+                # others return the keyword string directly
+                matched = (result if isinstance(result, str) else result.keyword).strip()
+                if not matched:
                     continue
 
-                # result.keyword is the matched keyword string (may be pinyin like "XIAO ZHI...")
-                # Match back to the original Chinese keyword via our index
-                matched = result.keyword.strip()
                 logger.info("Keyword detected: %r", matched)
 
                 # Reset stream to avoid immediate re-trigger on the same audio
