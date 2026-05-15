@@ -28,7 +28,6 @@ import logging
 import signal
 import sys
 import time
-import uuid
 from pathlib import Path
 
 import numpy as np
@@ -106,10 +105,13 @@ class VoiceChatApp:
             logger.info("Wake word detection disabled by config")
             return
         self._wakeword = WakeWordDetector(
-            model=ww_cfg.get("model", "okay_nabu"),
-            stop_model=ww_cfg.get("stop_model", "stop"),
+            wake_keywords=ww_cfg.get("wake_keywords", ["小智小智"]),
+            stop_keywords=ww_cfg.get("stop_keywords", ["停止"]),
+            model_dir=ww_cfg.get("model_dir", ""),
             refractory_seconds=ww_cfg.get("refractory_seconds", 2.0),
-            sensitivity=ww_cfg.get("sensitivity", 0.5),
+            keywords_score=ww_cfg.get("keywords_score", 1.0),
+            keywords_threshold=ww_cfg.get("keywords_threshold", 0.25),
+            num_threads=ww_cfg.get("num_threads", 1),
         )
         self._wakeword.start()
         logger.info("Wake word detector initialized")
@@ -504,7 +506,7 @@ class VoiceChatApp:
         if self._motion:
             self._motion.on_idle()
         if self._wakeword:
-            pass  # wake word has no explicit stop
+            self._wakeword.stop()
 
         if self._mini:
             try:

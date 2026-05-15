@@ -28,10 +28,16 @@ audio:
   speaker_buffer_seconds: 2.0 # 扬声器缓冲区大小
 
 wakeword:
-  model: "okay_nabu"           # 默认唤醒词
-  stop_model: "stop"           # 停止词
-  refractory_seconds: 2.0     # 唤醒后冷却时间
-  sensitivity: 0.5             # 检测灵敏度 0-1
+  enabled: true
+  wake_keywords:
+    - "小智小智"           # 可添加多个唤醒词
+  stop_keywords:
+    - "停止"               # 可添加多个停止词
+  model_dir: ""            # 留空自动下载到 ~/.cache/sherpa-onnx/（~30MB，仅首次）
+  refractory_seconds: 2.0  # 唤醒后冷却时间（防重复触发）
+  keywords_score: 1.0      # 关键词分数权重
+  keywords_threshold: 0.25 # 检测置信度阈值（降低=更灵敏，升高=更保守）
+  num_threads: 1           # ONNX 推理线程数
 
 reachy:
   connection_mode: "auto"      # auto / localhost_only / network

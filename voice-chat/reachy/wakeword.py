@@ -1,98 +1,243 @@
 """
-Wake word and stop word detection — uses openWakeWord for wake word detection.
+Wake word and stop word detection — Sherpa-ONNX keyword spotting.
+
+Model: sherpa-onnx-kws-zipformer-wenetspeech-3.3M-2024-01-01 (Chinese, 3.3M params, offline)
+Downloads automatically to ~/.cache/sherpa-onnx/ on first run (~30 MB).
+
+Detection runs in a background thread so process_chunk() never blocks the async loop.
 """
 
 from __future__ import annotations
 
 import logging
+import queue
+import tarfile
+import threading
 import time
+import urllib.request
+from pathlib import Path
 from typing import Optional
 
 import numpy as np
 
 logger = logging.getLogger(__name__)
 
+_MODEL_NAME = "sherpa-onnx-kws-zipformer-wenetspeech-3.3M-2024-01-01"
+_MODEL_URL = (
+    "https://github.com/k2-fsa/sherpa-onnx/releases/download/kws-models/"
+    f"{_MODEL_NAME}.tar.bz2"
+)
+_CACHE_DIR = Path.home() / ".cache" / "sherpa-onnx"
+
 
 class WakeWordDetector:
-    """Offline wake word detection using openWakeWord.
+    """Offline keyword spotting using Sherpa-ONNX.
+
+    Supports multiple wake words and stop words in a single model pass.
+    Inference runs in a background thread — process_chunk() is non-blocking.
 
     Usage:
-        detector = WakeWordDetector(model="hey_jarvis")
+        detector = WakeWordDetector(
+            wake_keywords=["小智小智"],
+            stop_keywords=["停止"],
+        )
         detector.start()
-        ...
         result = detector.process_chunk(pcm_bytes)
-        if result == "wake":
-            # start listening
+        # "wake", "stop", or None
     """
-
-    WAKE_WORDS = "wake"
 
     def __init__(
         self,
-        model: str = "hey_jarvis",
-        stop_model: str = "stop",
+        wake_keywords: list[str] | None = None,
+        stop_keywords: list[str] | None = None,
+        model_dir: str = "",
         refractory_seconds: float = 2.0,
-        sensitivity: float = 0.5,
+        keywords_score: float = 1.0,
+        keywords_threshold: float = 0.25,
+        num_threads: int = 1,
     ):
-        self._model_name = model
+        self._wake_keywords = set(wake_keywords or ["小智小智"])
+        self._stop_keywords = set(stop_keywords or ["停止"])
+        self._model_dir = Path(model_dir) if model_dir else None
         self._refractory_seconds = refractory_seconds
-        self._sensitivity = sensitivity
+        self._keywords_score = keywords_score
+        self._keywords_threshold = keywords_threshold
+        self._num_threads = num_threads
+
+        self._spotter = None
+        self._stream = None
         self._last_wake_time = 0.0
-        self._oww_model = None
-        self._block_size = 1280  # 80ms at 16kHz
+
+        # maxsize=30 ≈ 2.4s of audio at 80ms/frame; drops frames if thread falls behind
+        self._audio_queue: queue.Queue[Optional[bytes]] = queue.Queue(maxsize=30)
+        self._result_queue: queue.Queue[str] = queue.Queue()
+        self._thread: threading.Thread | None = None
+        self._running = False
 
     def start(self):
-        """Load wake word model."""
+        """Download model if needed, load it, and start the background detection thread."""
         try:
-            self._load_models()
-            logger.info("Wake word detector started with model=%s", self._model_name)
+            model_dir = self._resolve_model_dir()
+            self._load_model(model_dir)
+            self._running = True
+            self._thread = threading.Thread(
+                target=self._detection_loop, daemon=True, name="wakeword-detect"
+            )
+            self._thread.start()
+            logger.info(
+                "Sherpa-ONNX KWS started — wake=%s stop=%s",
+                sorted(self._wake_keywords),
+                sorted(self._stop_keywords),
+            )
+        except ImportError:
+            logger.error("sherpa-onnx not installed — run: pip install sherpa-onnx")
         except Exception as e:
-            logger.error("Failed to load wake word models: %s", e)
-            logger.info("Will try to continue without wake word detection")
+            logger.error("Failed to start wake word detector: %s", e)
 
-    def _load_models(self):
-        """Load openWakeWord model."""
-        from openwakeword.model import Model
-
-        self._oww_model = Model(wakeword_models=[self._model_name])
-        logger.info("Loaded openWakeWord model: %s", self._model_name)
-
-    def process_chunk(self, pcm_bytes: bytes) -> Optional[str]:
-        """Process a PCM audio chunk and detect wake word.
-
-        Args:
-            pcm_bytes: 16-bit signed little-endian PCM, 16kHz mono.
-
-        Returns:
-            "wake" if wake word detected, None otherwise.
-        """
-        if self._oww_model is None:
-            return None
-
+    def stop(self):
+        """Stop the background detection thread."""
+        self._running = False
         try:
-            # openWakeWord expects numpy array of int16
-            pcm_array = np.frombuffer(pcm_bytes, dtype=np.int16)
-            prediction = self._oww_model.predict(pcm_array)
+            self._audio_queue.put_nowait(None)  # unblock thread
+        except queue.Full:
+            pass
+        if self._thread:
+            self._thread.join(timeout=2.0)
 
-            # Log all predictions for debugging
-            for name, score in prediction.items():
-                if score > 0.2:
-                    logger.debug("Wake score: %s=%.3f", name, score)
+    # ── Model setup ──────────────────────────────────────────────
 
-            # Check prediction score
-            for name, score in prediction.items():
-                if score > self._sensitivity:
-                    now = time.monotonic()
+    def _resolve_model_dir(self) -> Path:
+        if self._model_dir and self._model_dir.exists():
+            return self._model_dir
+        cached = _CACHE_DIR / _MODEL_NAME
+        if not cached.exists():
+            self._download_model(cached)
+        return cached
+
+    def _download_model(self, target: Path):
+        _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        archive = _CACHE_DIR / f"{_MODEL_NAME}.tar.bz2"
+        logger.info("Downloading Sherpa-ONNX KWS model (~30 MB): %s", _MODEL_URL)
+
+        last_pct = [-1]
+
+        def _progress(count, block_size, total):
+            pct = min(count * block_size * 100 // total, 100)
+            if pct // 10 != last_pct[0] // 10:
+                last_pct[0] = pct
+                logger.info("  Downloading... %d%%", pct)
+
+        urllib.request.urlretrieve(_MODEL_URL, archive, reporthook=_progress)
+        logger.info("Extracting model to %s", _CACHE_DIR)
+        with tarfile.open(archive, "r:bz2") as t:
+            t.extractall(_CACHE_DIR)
+        archive.unlink()
+        logger.info("Model ready: %s", target)
+
+    def _find_onnx_files(self, model_dir: Path) -> tuple[str, str, str]:
+        """Glob for encoder/decoder/joiner without hardcoding checkpoint names."""
+        encoders = sorted(model_dir.glob("encoder*.onnx"))
+        decoders = sorted(model_dir.glob("decoder*.onnx"))
+        joiners = sorted(model_dir.glob("joiner*.onnx"))
+        if not (encoders and decoders and joiners):
+            raise FileNotFoundError(f"ONNX files not found in {model_dir}")
+        return str(encoders[0]), str(decoders[0]), str(joiners[0])
+
+    def _write_keywords_file(self) -> Path:
+        """Write all wake + stop keywords to a temp file for the spotter."""
+        kw_file = _CACHE_DIR / "keywords.txt"
+        _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        all_kw = sorted(self._wake_keywords) + sorted(self._stop_keywords)
+        kw_file.write_text("\n".join(all_kw) + "\n", encoding="utf-8")
+        logger.debug("Keywords: %s", all_kw)
+        return kw_file
+
+    def _load_model(self, model_dir: Path):
+        import sherpa_onnx
+
+        encoder, decoder, joiner = self._find_onnx_files(model_dir)
+        keywords_file = self._write_keywords_file()
+
+        config = sherpa_onnx.KeywordSpotterConfig(
+            feat_config=sherpa_onnx.FeatureExtractorConfig(
+                sample_rate=16000,
+                feature_dim=80,
+            ),
+            model_config=sherpa_onnx.OnlineModelConfig(
+                transducer=sherpa_onnx.OnlineTransducerModelConfig(
+                    encoder=encoder,
+                    decoder=decoder,
+                    joiner=joiner,
+                ),
+                tokens=str(model_dir / "tokens.txt"),
+                num_threads=self._num_threads,
+                provider="cpu",
+            ),
+            keywords_file=str(keywords_file),
+            keywords_score=self._keywords_score,
+            keywords_threshold=self._keywords_threshold,
+            num_trailing_blanks=1,
+        )
+        self._spotter = sherpa_onnx.KeywordSpotter(config)
+        self._stream = self._spotter.create_stream()
+
+    # ── Detection loop (background thread) ───────────────────────
+
+    def _detection_loop(self):
+        while self._running:
+            try:
+                pcm_bytes = self._audio_queue.get(timeout=0.1)
+            except queue.Empty:
+                continue
+
+            if pcm_bytes is None:  # stop sentinel
+                break
+
+            try:
+                audio = np.frombuffer(pcm_bytes, dtype=np.int16).astype(np.float32) / 32768.0
+                self._stream.accept_waveform(16000, audio)
+                while self._spotter.is_ready(self._stream):
+                    self._spotter.decode_stream(self._stream)
+
+                result = self._spotter.get_result(self._stream)
+                if not result.keyword:
+                    continue
+
+                # Normalize: model may return space-separated chars ("小 智 小 智")
+                keyword = result.keyword.strip().replace(" ", "")
+                logger.info("Keyword detected: %r", keyword)
+
+                # Reset stream to avoid immediate re-trigger on the same audio
+                self._stream = self._spotter.create_stream()
+
+                now = time.monotonic()
+                if keyword in self._wake_keywords:
                     if now - self._last_wake_time > self._refractory_seconds:
                         self._last_wake_time = now
-                        logger.info("Wake word DETECTED: %s (score=%.3f)", name, score)
-                        return self.WAKE_WORDS
+                        self._result_queue.put("wake")
+                elif keyword in self._stop_keywords:
+                    self._result_queue.put("stop")
 
-        except Exception as e:
-            logger.debug("Wake detection error: %s", e)
+            except Exception as e:
+                logger.debug("Detection error: %s", e)
 
-        return None
+    # ── Public API ────────────────────────────────────────────────
+
+    def process_chunk(self, pcm_bytes: bytes) -> Optional[str]:
+        """Non-blocking. Enqueue audio; return any pending detection result.
+
+        Returns "wake", "stop", or None.
+        """
+        try:
+            self._audio_queue.put_nowait(pcm_bytes)
+        except queue.Full:
+            pass  # drop frame; detection thread is catching up
+
+        try:
+            return self._result_queue.get_nowait()
+        except queue.Empty:
+            return None
 
     @property
     def is_loaded(self) -> bool:
-        return self._oww_model is not None
+        return self._spotter is not None
