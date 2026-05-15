@@ -241,20 +241,23 @@ class XiaozhiClient:
         """Encode PCM audio and send as binary frame."""
         if self._ws is None or self._state == DeviceState.IDLE:
             return
-        try:
-            opus_frame = self.codec.encode(pcm_data)
-            if opus_frame is None:
-                return
+        opus_frame = self.codec.encode(pcm_data)
+        if opus_frame is None:
+            return
 
-        if self.protocol_version == 3:
-            payload = struct.pack("!BBH", 0, 0, len(opus_frame)) + opus_frame
-            await self._ws.send(payload)
-        elif self.protocol_version == 2:
-            ts = int(time.time() * 1000) & 0xFFFFFFFF
-            payload = struct.pack("!HHIII", 2, 0, 0, ts, len(opus_frame)) + opus_frame
-            await self._ws.send(payload)
-        else:
-            await self._ws.send(opus_frame)
+        try:
+            if self.protocol_version == 3:
+                payload = struct.pack("!BBH", 0, 0, len(opus_frame)) + opus_frame
+                await self._ws.send(payload)
+            elif self.protocol_version == 2:
+                ts = int(time.time() * 1000) & 0xFFFFFFFF
+                payload = struct.pack("!HHIII", 2, 0, 0, ts, len(opus_frame)) + opus_frame
+                await self._ws.send(payload)
+            else:
+                await self._ws.send(opus_frame)
+        except Exception as e:
+            logger.error("send_audio failed: %s", e)
+            raise
 
         if not hasattr(self, '_send_count'):
             self._send_count = 0
@@ -322,8 +325,13 @@ class XiaozhiClient:
                     self.on_tts_start()
             elif state == "stop":
                 logger.info("TTS stop")
-                # Multi-turn: go back to LISTENING instead of IDLE
-                # This allows user to continue speaking without wake word
+                # Multi-turn: notify server before entering LISTENING so it accepts next audio turn
+                await self._send_json({
+                    "session_id": self._session_id,
+                    "type": "listen",
+                    "state": "start",
+                    "mode": "auto",
+                })
                 self._set_state(DeviceState.LISTENING)
                 if self.on_tts_stop:
                     self.on_tts_stop()

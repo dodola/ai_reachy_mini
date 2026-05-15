@@ -6,7 +6,9 @@ microphone, speaker, and motor control.
 
 State machine:
   IDLE → (wake word) → CONNECTING → (hello) → LISTENING
-    → (VAD end) → THINKING → (TTS start) → SPEAKING → (TTS end) → IDLE
+    → (VAD end) → THINKING → (TTS start) → SPEAKING
+    → (TTS end, multi-turn) → LISTENING  (continues without wake word)
+    → (TTS end, single-turn) → IDLE
 
   Face tracking runs in background during active conversation:
     - LISTENING: head tracks detected face
@@ -178,7 +180,7 @@ class VoiceChatApp:
         self._client = XiaozhiClient(
             server_url=xz_cfg.get("server_url", "wss://api.xiaozhi.me/v1/"),
             token=xz_cfg.get("token", ""),
-            device_id=xz_cfg.get("device_id", "") or f"reachy-{uuid.uuid4().hex[:8]}",
+            device_id=xz_cfg.get("device_id", ""),
             client_id=xz_cfg.get("client_id", ""),
             protocol_version=xz_cfg.get("protocol_version", 3),
             codec=self._codec,
@@ -276,8 +278,6 @@ class VoiceChatApp:
 
     def _on_tts_stop(self):
         logger.info("[TTS] stop — ready for next turn")
-        if self._motion:
-            self._motion.on_listening()  # Prepare for next turn
 
     def _on_tts_text(self, text: str):
         logger.debug("[TTS sentence] %s", text)
@@ -397,7 +397,10 @@ class VoiceChatApp:
                     await asyncio.sleep(0.1)
 
                 delay = min(base_delay * (2 ** min(retry_count, 5)), 30.0)
-                logger.info("Reconnecting in %.1fs (attempt %d/%d)", delay, retry_count, max_retries)
+                if retry_count == 0:
+                    logger.info("Session ended, reconnecting in %.1fs...", delay)
+                else:
+                    logger.info("Reconnect attempt %d/%d in %.1fs", retry_count, max_retries, delay)
                 await asyncio.sleep(delay)
 
             except Exception as e:
