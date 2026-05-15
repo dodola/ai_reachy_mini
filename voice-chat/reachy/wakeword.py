@@ -143,28 +143,61 @@ class WakeWordDetector:
             raise FileNotFoundError(f"ONNX files not found in {model_dir}")
         return str(encoders[0]), str(decoders[0]), str(joiners[0])
 
-    def _write_keywords_file(self) -> Path:
-        """Write keywords file in sherpa-onnx format.
+    def _write_keywords_file(self, model_dir: Path) -> Path:
+        """Write keywords.txt using exact byte sequences from tokens.txt.
 
-        Sherpa-ONNX expects space-separated tokens per line. For Chinese,
-        each character is one token: "小智小智" → "小 智 小 智".
-        tokens.txt in the model archive is UTF-8, so keywords.txt must also
-        be UTF-8 for byte-level lookups to match. Windows terminal may display
-        the UTF-8 content as garbled, but the C++ lookup works correctly.
+        Reads tokens.txt in binary mode so the bytes written to keywords.txt
+        are identical to what C++ will find — completely encoding-agnostic.
+        Also logs a sample of tokens.txt and any missing characters.
         """
+        tokens_file = model_dir / "tokens.txt"
         kw_file = _CACHE_DIR / "keywords.txt"
         _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+        # Log first 5 raw lines so we can see the actual token format
+        with open(tokens_file, "rb") as f:
+            sample = [f.readline().rstrip(b"\r\n") for _ in range(5)]
+        logger.debug("tokens.txt first 5 lines (raw): %s", sample)
+
+        # Build char → raw_bytes map from tokens.txt (binary, no encoding assumption)
+        char_to_bytes: dict[str, bytes] = {}
+        with open(tokens_file, "rb") as f:
+            for raw_line in f:
+                # Format: "<token_bytes> <integer_id>"
+                parts = raw_line.rstrip(b"\r\n").rsplit(b" ", 1)
+                if len(parts) != 2:
+                    continue
+                token_raw = parts[0]
+                for enc in ("utf-8", "gbk"):
+                    try:
+                        char = token_raw.decode(enc)
+                        if char not in char_to_bytes:
+                            char_to_bytes[char] = token_raw
+                        break
+                    except (UnicodeDecodeError, ValueError):
+                        pass
+
         all_kw = sorted(self._wake_keywords) + sorted(self._stop_keywords)
-        lines = [" ".join(kw) for kw in all_kw]
-        kw_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
-        logger.debug("Keywords file: %s", lines)
+        all_chars = set("".join(all_kw))
+        missing = all_chars - set(char_to_bytes)
+        if missing:
+            logger.warning("Chars not in tokens.txt: %s — keywords may not work", sorted(missing))
+        else:
+            logger.info("All keyword chars found in tokens.txt")
+
+        with open(kw_file, "wb") as f:
+            for kw in all_kw:
+                parts = [char_to_bytes.get(c, c.encode("utf-8")) for c in kw]
+                f.write(b" ".join(parts) + b"\n")
+
+        logger.debug("Keywords written: %s", [" ".join(kw) for kw in all_kw])
         return kw_file
 
     def _load_model(self, model_dir: Path):
         import sherpa_onnx
 
         encoder, decoder, joiner = self._find_onnx_files(model_dir)
-        keywords_file = self._write_keywords_file()
+        keywords_file = self._write_keywords_file(model_dir)
 
         self._spotter = sherpa_onnx.KeywordSpotter(
             tokens=str(model_dir / "tokens.txt"),
