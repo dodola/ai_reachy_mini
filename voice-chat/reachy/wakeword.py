@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import logging
 import queue
-import sys
 import tarfile
 import threading
 import time
@@ -149,16 +148,16 @@ class WakeWordDetector:
 
         Sherpa-ONNX expects space-separated tokens per line. For Chinese,
         each character is one token: "小智小智" → "小 智 小 智".
-        On Windows the C++ file reader uses the system codepage (GBK),
-        so we match that encoding instead of UTF-8.
+        tokens.txt in the model archive is UTF-8, so keywords.txt must also
+        be UTF-8 for byte-level lookups to match. Windows terminal may display
+        the UTF-8 content as garbled, but the C++ lookup works correctly.
         """
         kw_file = _CACHE_DIR / "keywords.txt"
         _CACHE_DIR.mkdir(parents=True, exist_ok=True)
         all_kw = sorted(self._wake_keywords) + sorted(self._stop_keywords)
         lines = [" ".join(kw) for kw in all_kw]
-        enc = "mbcs" if sys.platform == "win32" else "utf-8"
-        kw_file.write_text("\n".join(lines) + "\n", encoding=enc)
-        logger.debug("Keywords file (%s): %s", enc, lines)
+        kw_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        logger.debug("Keywords file: %s", lines)
         return kw_file
 
     def _load_model(self, model_dir: Path):
