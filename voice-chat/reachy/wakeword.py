@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 import queue
+import sys
 import tarfile
 import threading
 import time
@@ -144,12 +145,20 @@ class WakeWordDetector:
         return str(encoders[0]), str(decoders[0]), str(joiners[0])
 
     def _write_keywords_file(self) -> Path:
-        """Write all wake + stop keywords to a temp file for the spotter."""
+        """Write keywords file in sherpa-onnx format.
+
+        Sherpa-ONNX expects space-separated tokens per line. For Chinese,
+        each character is one token: "小智小智" → "小 智 小 智".
+        On Windows the C++ file reader uses the system codepage (GBK),
+        so we match that encoding instead of UTF-8.
+        """
         kw_file = _CACHE_DIR / "keywords.txt"
         _CACHE_DIR.mkdir(parents=True, exist_ok=True)
         all_kw = sorted(self._wake_keywords) + sorted(self._stop_keywords)
-        kw_file.write_text("\n".join(all_kw) + "\n", encoding="utf-8")
-        logger.debug("Keywords: %s", all_kw)
+        lines = [" ".join(kw) for kw in all_kw]
+        enc = "mbcs" if sys.platform == "win32" else "utf-8"
+        kw_file.write_text("\n".join(lines) + "\n", encoding=enc)
+        logger.debug("Keywords file (%s): %s", enc, lines)
         return kw_file
 
     def _load_model(self, model_dir: Path):
