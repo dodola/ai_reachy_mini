@@ -16,6 +16,9 @@ opuslib>=3.0.1
 # Wake word detection
 pymicro-wakeword>=0.4.0
 pyopen-wakeword>=0.4.0
+sherpa-onnx>=1.10.0
+sentencepiece>=0.2.0
+pypinyin>=0.52.0
 
 # Face tracking (optional — install on devices with camera)
 mediapipe>=0.10.0
